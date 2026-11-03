@@ -41,10 +41,15 @@ export function ImportDialog({ draft, onClose }) {
     optionName: (d.props ?? []).map((p) => p.name).join(' / ') || '规格',
     image: d.images?.[0] ?? '',
   }));
+  // 规格没有单价（阶梯价商品）时，成本取起订档价格；旧数据没有阶梯价信息则取最高价，宁可高估成本
+  const tiers = d.priceTiers ?? [];
+  const fallbackCost = tiers[0]?.price ?? d.priceMax ?? d.priceMin ?? 0;
   const [rows, setRows] = useState(() => (d.skus ?? []).map((s) => {
     const w = s.weight_g || 500;
-    return { key: s.skuId ?? s.specText, on: true, spec: s.specText || '默认', cost: s.price ?? d.priceMin ?? 0, weight: w, image: s.image || '', price: suggestPrice(s.price ?? d.priceMin ?? 0, w, cny, 0.3) };
+    const cost = s.price ?? fallbackCost;
+    return { key: s.skuId ?? s.specText, on: true, spec: s.specText || '默认', cost, weight: w, image: s.image || '', price: suggestPrice(cost, w, cny, 0.3) };
   }));
+  const usedFallback = (d.skus ?? []).some((s) => s.price == null || s.priceFromTier);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
@@ -131,6 +136,16 @@ export function ImportDialog({ draft, onClose }) {
               slotProps={{ input: { endAdornment: <InputAdornment position="end">%</InputAdornment> } }} />
             <Button size="small" variant="outlined" onClick={reprice}>按毛利重算售价</Button>
           </Stack>
+          {tiers.length > 1 && (
+            <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 0.75, mt: '8px !important' }}>
+              <Typography sx={{ fontSize: 13, color: 'text.secondary' }}>阶梯价</Typography>
+              {tiers.map((t) => <Chip key={t.min} size="small" variant="outlined" label={`${t.min}${d.unit ?? '件'}起 ¥${t.price}`} />)}
+              <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>默认按起订档计成本，可按实际采购量修改</Typography>
+            </Stack>
+          )}
+          {usedFallback && !tiers.length && (
+            <Alert severity="info" sx={{ py: 0 }}>该商品按采购量阶梯定价，规格没有单独价格，成本已按最高价 ¥{fallbackCost} 估算。用新版插件重新采集可获取完整阶梯价。</Alert>
+          )}
           <Typography sx={{ fontSize: 12, color: 'text.secondary', mt: '4px !important' }}>
             成本为 1688 批发价；毛利按 头程 ¥45/kg + 尾程 $4 + 佣金 15% 估算，汇率 1 CNY = ${cny}
           </Typography>

@@ -4,9 +4,15 @@
 import { SUPABASE_URL, SUPABASE_KEY } from './config.js';
 
 const VERSION = chrome.runtime.getManifest().version;
-const DELAY_MS = [2500, 5000];            // 每个商品之间的间隔
+// 每个商品之间的间隔（秒），用户可在浮动栏或插件弹窗里设置；实际间隔在设定值 ±30% 内随机
+export const DEFAULT_DELAY_SEC = 1;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const jitter = () => DELAY_MS[0] + Math.random() * (DELAY_MS[1] - DELAY_MS[0]);
+const getDelaySec = async () => {
+  const { delaySec } = await chrome.storage.local.get('delaySec');
+  const n = Number(delaySec ?? DEFAULT_DELAY_SEC);
+  return Number.isFinite(n) ? Math.min(Math.max(n, 0), 60) : DEFAULT_DELAY_SEC;
+};
+const jitter = async () => (await getDelaySec()) * 1000 * (0.7 + Math.random() * 0.6);
 
 // ---------- 页面数据解析（在 1688 页面的 MAIN world 执行，必须自包含） ----------
 function extract1688() {
@@ -41,8 +47,15 @@ function extract1688() {
       weight_g: weights[String(s.skuId)] || (unitWeight ? Math.round(unitWeight * 1000) : null), image: imageOf(spec),
     };
   });
+  // 阶梯价（按采购量分档，所有规格同价）：规格没有单价时取起订档价格——最贴近小批量采购的真实成本
+  const tm = model.tradeModel || {};
+  const tiers = (((tm.offerPriceModel || {}).currentPrices) || tm.disPriceRanges || [])
+    .map((t) => ({ min: Number(t.beginAmount) || 1, price: num(t.price) })).filter((t) => t.price)
+    .sort((a, b) => a.min - b.min);
+  const tierPrice = tiers.length ? tiers[0].price : null;
+  skus.forEach((s) => { if (!s.price && tierPrice) { s.price = tierPrice; s.priceFromTier = true; } });
   const priceMin = num(trade.offerMinPrice), priceMax = num(trade.offerMaxPrice);
-  if (!skus.length) skus = [{ skuId: null, spec: [], specText: '默认', price: priceMin, stock: null, weight_g: unitWeight ? Math.round(unitWeight * 1000) : null, image: null }];
+  if (!skus.length) skus = [{ skuId: null, spec: [], specText: '默认', price: tierPrice || priceMax || priceMin, stock: null, weight_g: unitWeight ? Math.round(unitWeight * 1000) : null, image: null }];
   // 规格顺序与页面一致
   const order = (props[0] && props[0].values.map((v) => v.name)) || [];
   skus.sort((a, b) => (order.indexOf(a.spec[0]) - order.indexOf(b.spec[0])) || a.specText.localeCompare(b.specText, 'zh'));
@@ -55,7 +68,7 @@ function extract1688() {
     category: clean(od.leafCategoryName),
     images: [...new Set(images)].slice(0, 12),
     props, skus: skus.slice(0, 200),
-    priceMin, priceMax: priceMax || priceMin,
+    priceMin, priceMax: priceMax || priceMin, priceTiers: tiers.slice(0, 6),
     moq: num(trade.offerBeginAmount),
     unit: clean(((d.productTitle || {}).fields || {}).unit) || null,
     attributes: (od.featureAttributes || []).map((a) => ({ name: clean(a.name), value: clean(a.value) })).filter((a) => a.name && a.value).slice(0, 40),
@@ -64,15 +77,37 @@ function extract1688() {
   };
 }
 
-async function extractFromTab(tabId, tries = 10) {
+async function extractFromTab(tabId, tries = 10, interval = 1000) {
   for (let i = 0; i < tries; i++) {
     try {
       const [res] = await chrome.scripting.executeScript({ target: { tabId }, world: 'MAIN', func: extract1688 });
       if (res && res.result) return res.result;
     } catch { /* 页面还在跳转 */ }
-    await sleep(1000);
+    await sleep(interval);
   }
   return null;
+}
+
+// 后台标签页里等商品数据出现：页面数据是内嵌在 HTML 里的，不必等图片等资源全部加载完
+async function waitForData(tabId, ms = 25000) {
+  const end = Date.now() + ms;
+  let completeAt = 0;
+  while (Date.now() < end) {
+    const t = await chrome.tabs.get(tabId).catch(() => null);
+    if (!t) return { data: null, url: '' };
+    const url = t.pendingUrl || t.url || '';
+    if (NEEDS_USER.test(url)) return { data: null, url };
+    if (/detail\.1688\.com\/offer\//.test(t.url || '')) {
+      const data = await extractFromTab(tabId, 1);
+      if (data) return { data, url };
+    }
+    if (t.status === 'complete') {
+      completeAt ||= Date.now();
+      if (Date.now() - completeAt > 4000) return { data: null, url: t.url || '' };   // 加载完 4 秒仍无数据
+    }
+    await sleep(300);
+  }
+  return { data: null, url: (await chrome.tabs.get(tabId).catch(() => ({}))).url || '' };
 }
 
 // ---------- Supabase：插件自己的匿名会话 ----------
@@ -141,10 +176,8 @@ async function waitComplete(tabId, ms = 30000) {
 async function processOne(item) {
   const tab = await chrome.tabs.create({ url: `https://detail.1688.com/offer/${item.offerId}.html`, active: false });
   try {
-    const t = await waitComplete(tab.id);
-    let data = await extractFromTab(tab.id, 8);
+    const { data, url } = await waitForData(tab.id);
     if (!data) {
-      const url = (await chrome.tabs.get(tab.id).catch(() => ({}))).url || t?.url || '';
       if (NEEDS_USER.test(url) || !/detail\.1688\.com\/offer\//.test(url)) {
         // 交给用户处理登录/滑块验证，不尝试绕过
         await chrome.tabs.update(tab.id, { active: true });
@@ -175,7 +208,7 @@ async function runQueue() {
         if ((await processOne(item)) === 'paused') { item.status = 'pending'; break; }
       } catch (e) { item.status = 'error'; item.msg = String(e.message || e).slice(0, 120); }
       await persist(); broadcast();
-      if (state.items.some((x) => x.status === 'pending')) await sleep(jitter());
+      if (state.items.some((x) => x.status === 'pending')) await sleep(await jitter());
     }
   } finally {
     if (state) await update({ running: false });
@@ -241,7 +274,12 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
       case 'clearState': state = null; await chrome.storage.session.remove('queue'); return { ok: true };
       case 'status': {
         const { stats, session } = await chrome.storage.local.get(['stats', 'session']);
-        return { version: VERSION, stats: stats ?? { total: 0 }, connected: !!session };
+        return { version: VERSION, stats: stats ?? { total: 0 }, connected: !!session, delaySec: await getDelaySec() };
+      }
+      case 'setDelay': {
+        const n = Math.min(Math.max(Number(msg.delaySec) || 0, 0), 60);
+        await chrome.storage.local.set({ delaySec: n });
+        return { ok: true, delaySec: n };
       }
       default: return { error: 'unknown message' };
     }

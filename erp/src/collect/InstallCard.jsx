@@ -8,7 +8,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { useExtension, EXTENSION_ZIP, EXTENSIONS_PAGE, WEB_STORE_URL, BROWSER } from './extension';
+import { useExtension, isOutdated, EXTENSION_LATEST, EXTENSION_ZIP, EXTENSIONS_PAGE, WEB_STORE_URL, BROWSER } from './extension';
 
 const Step = ({ n, title, children }) => (
   <Stack direction="row" spacing={1.5} sx={{ alignItems: 'flex-start', flex: 1, minWidth: 220 }}>
@@ -39,7 +39,8 @@ export function InstallCard() {
   const { status, info } = useExtension();
   const [open, setOpen] = useState(false);
   const installed = status === 'installed';
-  const showGuide = !installed || open;
+  const outdated = installed && isOutdated(info?.version);
+  const showGuide = !installed || open || outdated;
 
   return (
     <Box sx={(t) => ({ border: `1px solid ${t.palette.divider}`, borderRadius: 4, p: 2, m: 2, mb: 1 })}>
@@ -51,7 +52,9 @@ export function InstallCard() {
         </Box>
         {status === 'checking' && <Chip size="small" label="检测中…" />}
         {installed && <>
-          <Chip size="small" color="success" icon={<CheckCircleIcon />} label={`已安装 v${info.version}`} />
+          {outdated
+            ? <Chip size="small" color="warning" label={`v${info.version} · 有新版本 v${EXTENSION_LATEST}`} />
+            : <Chip size="small" color="success" icon={<CheckCircleIcon />} label={`已安装 v${info.version}`} />}
           <Button size="small" href="https://s.1688.com/" target="_blank" rel="noopener" endIcon={<OpenInNewIcon />}>去 1688 选品</Button>
           <Button size="small" color="inherit" onClick={() => setOpen((v) => !v)} endIcon={<ExpandMoreIcon sx={{ transform: open ? 'rotate(180deg)' : 'none', transition: '.2s' }} />}>更新插件</Button>
         </>}

@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 
 // manifest.json 里的 key 固定了扩展 ID；上架 Chrome 应用商店后商店会分配新 ID，加到这里即可
 export const EXTENSION_IDS = ['eiahlmpjdglpdchmdnhapflafemmljbe'];
+// 最新版本号：与 extension/manifest.json 保持一致（打包脚本会校验）
+export const EXTENSION_LATEST = '0.1.1';
 export const EXTENSION_ZIP = `${import.meta.env.BASE_URL}wavely-1688-collector.zip`;
 export const WEB_STORE_URL = null;   // 上架后填商店地址，安装卡片会切换为「添加至 Chrome」
 
@@ -30,6 +32,9 @@ export async function pingExtension(timeout = 1000) {
   }
   return null;
 }
+
+const newer = (a, b) => { const x = a.split('.').map(Number), y = b.split('.').map(Number); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); return false; };
+export const isOutdated = (v) => !!v && newer(EXTENSION_LATEST, v);
 
 /** { status: 'checking' | 'installed' | 'missing', info } */
 export function useExtension() {

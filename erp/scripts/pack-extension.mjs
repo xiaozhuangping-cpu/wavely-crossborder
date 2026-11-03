@@ -9,6 +9,11 @@ const src = join(here, '../../extension');
 const pub = join(here, '../public');
 mkdirSync(pub, { recursive: true });
 
+// 版本号必须与 ERP 里的 EXTENSION_LATEST 一致，否则「有新版本」提示会出错
+const manifestVersion = JSON.parse(readFileSync(join(src, 'manifest.json'), 'utf8')).version;
+const latest = (readFileSync(join(here, '../src/collect/extension.js'), 'utf8').match(/EXTENSION_LATEST = '([^']+)'/) || [])[1];
+if (manifestVersion !== latest) { console.error(`extension version mismatch: manifest ${manifestVersion} vs EXTENSION_LATEST ${latest}`); process.exit(1); }
+
 const files = [];
 const walk = (dir) => readdirSync(dir).sort().forEach((n) => {
   if (n.startsWith('.')) return;

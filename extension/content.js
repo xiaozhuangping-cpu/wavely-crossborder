@@ -33,6 +33,8 @@
     .bar{height:4px;background:#e6eef1;border-radius:2px;margin-top:8px;overflow:hidden}
     .bar i{display:block;height:100%;background:${TEAL};transition:width .3s}
     .x{margin-left:auto;border:0;padding:0 4px;color:#888;background:none}
+    .opt{display:flex;align-items:center;gap:6px;margin-top:8px;color:#555;font-size:12px}
+    select{font:inherit;border:1px solid #d0d7de;border-radius:6px;padding:1px 4px;background:#fff}
   </style>
   <div class="box">
     <div class="head"><span class="logo"><svg width="14" height="14" viewBox="0 0 64 64"><path d="M6 38c8-12 16-12 26 0s18 12 26 0" stroke="#c2e7ff" stroke-width="9" fill="none" stroke-linecap="round"/></svg></span>
@@ -111,6 +113,9 @@
 
   // ---------- 列表页：浮动栏与进度 ----------
   let queue = null;   // 后台推送的采集进度
+  let delaySec = 1;
+  const DELAYS = [0, 0.5, 1, 2, 3, 5, 10];
+  send({ type: 'status' }).then((r) => { if (r?.delaySec != null) { delaySec = r.delaySec; render(); } });
   function render() {
     const total = queue?.items?.length || 0;
     const done = queue?.items?.filter((x) => x.status === 'done').length || 0;
@@ -123,7 +128,7 @@
         <div class="bar"><i style="width:${total ? Math.round(((done + failed.length) / total) * 100) : 0}%"></i></div>
         <div class="msg">${queue.paused
           ? '<b>1688 需要登录或安全验证。</b>请在已打开的页面里手动完成，然后点「继续」。'
-          : `正在采集 ${done + failed.length + 1}/${total}，为避免触发风控，每个商品间隔几秒…`}</div>
+          : `正在采集 ${done + failed.length + 1}/${total}，每个商品间隔约 ${delaySec} 秒…`}</div>
         <div class="row">${queue.paused ? '<button class="primary resume">继续</button>' : ''}<button class="cancel">停止</button></div>`;
       $body.querySelector('.resume')?.addEventListener('click', () => send({ type: 'resume' }));
       $body.querySelector('.cancel').onclick = () => send({ type: 'cancel' });
@@ -137,7 +142,11 @@
         <button class="clear" ${selected.size ? '' : 'disabled'}>清空</button>
         <button class="primary go" ${selected.size ? '' : 'disabled'}>采集 ${selected.size || ''} 个</button>
       </div>
+      <div class="opt">每个商品间隔
+        <select class="delay">${[...new Set([...DELAYS, delaySec])].sort((a, b) => a - b).map((s) => `<option value="${s}" ${s === delaySec ? 'selected' : ''}>${s} 秒</option>`).join('')}</select>
+        <span>间隔太短更容易触发 1688 验证</span></div>
       ${result || '<div class="msg">勾选商品卡片左上角的方框，可跨页累计（最多 100 个）。</div>'}`;
+    $body.querySelector('.delay').onchange = async (e) => { const r = await send({ type: 'setDelay', delaySec: Number(e.target.value) }); if (r?.ok) delaySec = r.delaySec; };
     $body.querySelector('.all').onclick = () => pageIds().forEach((id) => toggle(id, true));
     $body.querySelector('.clear').onclick = () => [...selected].forEach((id) => toggle(id, false));
     $body.querySelector('.go').onclick = async () => {
