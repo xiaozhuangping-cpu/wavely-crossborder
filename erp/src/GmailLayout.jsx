@@ -105,9 +105,12 @@ const UserAvatar = () => {
 const TopBar = ({ onMenu }) => {
   const small = useMediaQuery((t) => t.breakpoints.down('sm'));
   return (
-    <Box component="header" sx={{ height: 64, display: 'flex', alignItems: 'center', gap: 1, px: { xs: 1, sm: 1.5 }, flexShrink: 0 }}>
-      <IconButton onClick={onMenu} aria-label="主菜单" sx={{ mr: { sm: 0.5 } }}><MenuIcon /></IconButton>
-      {!small && <Logo />}
+    <Box component="header" sx={{ height: 64, display: 'flex', alignItems: 'center', gap: 1, pl: { xs: 1, sm: 1.5, md: 0 }, pr: { xs: 1, sm: 1.5 }, flexShrink: 0 }}>
+      {/* 桌面端左侧区块宽 248 + 间距 8 = 侧边栏 256，搜索框左缘与主面板左缘对齐 */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0, width: { md: 248 }, pl: { md: 1.5 } }}>
+        <IconButton onClick={onMenu} aria-label="主菜单"><MenuIcon /></IconButton>
+        {!small && <Logo />}
+      </Box>
       <SearchBar />
       <Box sx={{ flex: { md: 1 } }} />
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
