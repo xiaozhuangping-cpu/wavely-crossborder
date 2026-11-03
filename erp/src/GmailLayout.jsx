@@ -22,6 +22,7 @@ import PeopleOutlinedIcon from '@mui/icons-material/PeopleOutlined';
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
 import CurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange';
 import CalculateOutlinedIcon from '@mui/icons-material/CalculateOutlined';
+import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import LabelIcon from '@mui/icons-material/Label';
 import LogoutIcon from '@mui/icons-material/Logout';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
@@ -171,6 +172,7 @@ const Sidebar = ({ collapsed, onNavigate }) => {
   const paid = useCount('orders', { status: 'paid' });
   const transit = useCount('orders', { 'status@in': '(shipped,in_transit)' });
   const lowStock = useCount('v_inventory', { low_stock: true });
+  const collected = useCount('import_drafts', { status: 'new' });
   const { data: shops = [] } = useGetList('shops', { pagination: { page: 1, perPage: 20 }, sort: { field: 'id', order: 'ASC' } });
 
   const isOrders = (pred) => onOrders && pred(f);
@@ -188,6 +190,7 @@ const Sidebar = ({ collapsed, onNavigate }) => {
   const manage = [
     { to: '/products', icon: <Inventory2OutlinedIcon />, label: '商品 (SPU)' },
     { to: '/v_skus', icon: <QrCode2Icon />, label: 'SKU 管理' },
+    { to: '/import_drafts', icon: <AddShoppingCartIcon />, label: '1688 采集', count: collected },
     { to: '/v_inventory', icon: <WarehouseOutlinedIcon />, label: '库存', count: lowStock },
     { to: '/shipments', icon: <LocalShippingOutlinedIcon />, label: '物流' },
     { to: '/customers', icon: <PeopleOutlinedIcon />, label: '客户' },

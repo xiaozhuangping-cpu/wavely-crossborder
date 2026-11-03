@@ -1,0 +1,4 @@
+// 公开配置：publishable key 本就设计为可暴露在前端，数据安全由 RLS 控制（与 erp/.env 一致）
+export const SUPABASE_URL = 'https://wzxwssipzychiyygzcpd.supabase.co';
+export const SUPABASE_KEY = 'sb_publishable_4lfpfSj-OMA20HNBWw4zEg_5AeJZSdo';
+export const ERP_URL = 'https://xiaozhuangping-cpu.github.io/wavely-crossborder/erp/#/import_drafts';

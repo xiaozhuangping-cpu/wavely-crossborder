@@ -4,3 +4,5 @@ _site/
 .DS_Store
 supabase/.temp/
 supabase/.branches/
+erp/public/wavely-1688-collector.zip
+erp/public/collector-icon.png

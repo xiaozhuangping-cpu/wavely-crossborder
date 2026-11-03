@@ -1,0 +1,56 @@
+{
+  "manifest_version": 3,
+  "name": "Wavely 1688 采集助手",
+  "short_name": "Wavely 采集",
+  "version": "0.1.0",
+  "description": "在 1688 列表页勾选商品、在详情页一键采集，写入 Wavely 跨境 ERP 的采集箱。",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0qko9Fe1tFdXThh9il8b9YU21FFd6ea5uwCzuba+PsDNNR3TNyP/UQujqdOIJPnx9BUZUW0hRt/UHmHaEx7sbrfvvTOc7OrDiXQD9vBZnCyajMWCmVFq9FpXMWnnjITPShNPJE45MBpSl/lblZamFVpFDUUGlUCbyOiQHEjYPJM/NusiF2W5Dg+fhPg7FU/M87zcsCiJiWXFlGoh4mgtfwaANtGV7troPHhdOsFJmU1bfE0wRuSVdWbvFPJjg83uiTh+zTSSxcuHkq7fpRBfeHKGhrh3ougR1gA6HrF5gV6klyFOTs95McePd9vq3K29WSW3Sl+3+dPpKONgCe5ZXQIDAQAB",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "Wavely 1688 采集助手",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "permissions": [
+    "storage",
+    "scripting",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://*.1688.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.1688.com/*"
+      ],
+      "exclude_matches": [
+        "https://login.1688.com/*",
+        "https://passport.1688.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "externally_connectable": {
+    "matches": [
+      "https://xiaozhuangping-cpu.github.io/*",
+      "http://localhost/*",
+      "http://127.0.0.1/*"
+    ]
+  }
+}

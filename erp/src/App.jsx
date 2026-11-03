@@ -6,6 +6,7 @@ import StorefrontIcon from '@mui/icons-material/Storefront';
 import PeopleIcon from '@mui/icons-material/People';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import CurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange';
+import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 
 import { dataProvider, authProvider } from './supabase';
 import { i18nProvider } from './i18n';
@@ -22,6 +23,7 @@ import { ProfitCalculator } from './ProfitCalculator';
 import { OrderList, OrderShow, OrderEdit } from './resources/orders';
 import { ProductList, ProductEdit, ProductCreate } from './resources/products';
 import { SkuList, SkuEdit, SkuCreate } from './resources/skus';
+import { CollectBox } from './collect/CollectBox';
 import { InventoryList, InventoryEdit, ShopList, ShopEdit, ShopCreate, CustomerList, ShipmentList, RateList, RateEdit } from './resources/others';
 
 const MyLayout = ({ children }) => <GmailLayout>{children}</GmailLayout>;
@@ -49,6 +51,7 @@ export const App = () => (
     <Resource name="shipments" list={ShipmentList} icon={LocalShippingIcon} />
     <Resource name="shops" list={ShopList} edit={ShopEdit} create={ShopCreate} icon={StorefrontIcon} recordRepresentation="name" />
     <Resource name="customers" list={CustomerList} icon={PeopleIcon} recordRepresentation="name" />
+    <Resource name="import_drafts" list={CollectBox} icon={AddShoppingCartIcon} options={{ label: '1688 采集' }} />
     <Resource name="exchange_rates" list={RateList} edit={RateEdit} icon={CurrencyExchangeIcon} />
     <Resource name="order_items" />
     <Resource name="tracking_events" />

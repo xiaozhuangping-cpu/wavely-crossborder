@@ -4,8 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "pack:extension": "node scripts/pack-extension.mjs",
+    "dev": "npm run pack:extension && vite",
+    "build": "npm run pack:extension && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
