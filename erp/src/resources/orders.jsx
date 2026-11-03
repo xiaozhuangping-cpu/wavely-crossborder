@@ -72,7 +72,7 @@ const Tabs = () => {
         return (
           <Box key={t.key} role="tab" aria-selected={on} onClick={() => pick(t)}
             sx={(th) => ({
-              flex: '0 1 250px', height: 56, display: 'flex', alignItems: 'center', gap: 2, px: 2, cursor: 'pointer', position: 'relative',
+              flex: '0 0 auto', minWidth: 120, height: 48, display: 'flex', alignItems: 'center', gap: 1.25, pl: 2, pr: 3, cursor: 'pointer', position: 'relative',
               color: on ? t.color : th.palette.text.secondary, fontWeight: on ? 600 : 500, fontSize: 14,
               '&:hover': { bgcolor: th.palette.gm.navHover },
               '&::after': on ? { content: '""', position: 'absolute', left: 8, right: 8, bottom: 0, height: 3, borderRadius: '3px 3px 0 0', bgcolor: t.color } : {},
