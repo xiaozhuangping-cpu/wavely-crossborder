@@ -79,7 +79,7 @@ export const LoginPage = () => {
             </Stack>
 
             <Typography sx={{ fontSize: 14, color: 'text.secondary', mt: 3 }}>
-              所有数据均为演示数据，每天北京时间 03:00 自动重置，可以放心增删改。
+              所有数据均为演示数据，每天北京时间 03:00 自动重置，可以放心增删改。本系统由 AI 辅助生成。
               {' '}<Link href={REPO} target="_blank" rel="noopener" underline="hover" sx={{ fontWeight: 500 }}>了解实现方式</Link>
             </Typography>
 
@@ -94,7 +94,7 @@ export const LoginPage = () => {
       {/* 卡片下方页脚 */}
       <Stack direction="row" sx={{ width: '100%', maxWidth: 1040, justifyContent: 'space-between', alignItems: 'center',
         flexWrap: 'wrap', gap: 1, px: { xs: 3, sm: 1 }, py: 2, mt: { xs: 'auto', sm: 0 } }}>
-        <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>简体中文</Typography>
+        <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>简体中文 · AI 辅助生成</Typography>
         <Stack direction="row" spacing={3}>
           {[['作者博客', BLOG], ['源码', REPO], ['演示入口', `${BLOG}wavely-crossborder/`]].map(([l, h]) => (
             <Link key={l} href={h} underline="none" sx={{ fontSize: 12, color: 'text.secondary', '&:hover': { color: 'text.primary' } }}>{l}</Link>

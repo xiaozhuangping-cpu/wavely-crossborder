@@ -2,6 +2,8 @@
 
 虚构品牌「Wavely 海浪优选」的跨境电商全链路演示。
 
+> 本项目的代码、演示数据与界面设计均为 AI 辅助生成（使用 Claude Code），由作者策划与发布。
+
 - 在线访问：https://xiaozhuangping-cpu.github.io/wavely-crossborder/
 - ERP 后台：https://xiaozhuangping-cpu.github.io/wavely-crossborder/erp/
 

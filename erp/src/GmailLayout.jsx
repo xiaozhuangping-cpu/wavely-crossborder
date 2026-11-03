@@ -93,7 +93,8 @@ const UserAvatar = () => {
       <Menu anchorEl={el} open={!!el} onClose={() => setEl(null)}>
         <Box sx={{ px: 2, py: 1 }}>
           <Typography sx={{ fontWeight: 600 }}>演示访客</Typography>
-          <Typography variant="caption" sx={{ color: 'text.secondary' }}>匿名登录 · 数据每日 03:00 重置</Typography>
+          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>匿名登录 · 数据每日 03:00 重置</Typography>
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>本系统由 AI 辅助生成</Typography>
         </Box>
         <Divider />
         <MenuItem onClick={() => logout()}><ListItemIcon><LogoutIcon fontSize="small" /></ListItemIcon>退出演示</MenuItem>
