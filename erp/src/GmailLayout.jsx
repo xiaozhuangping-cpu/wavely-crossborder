@@ -1,0 +1,242 @@
+import { useState } from 'react';
+import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
+import { useSidebarState, useGetList, LoadingIndicator, ToggleThemeButton, useLogout, CheckForApplicationUpdate } from 'react-admin';
+import {
+  Box, IconButton, InputBase, Avatar, Tooltip, Drawer, Typography, Menu, MenuItem, ListItemIcon, Fab, useMediaQuery, Divider,
+} from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
+import SearchIcon from '@mui/icons-material/Search';
+import TuneIcon from '@mui/icons-material/Tune';
+import AppsIcon from '@mui/icons-material/Apps';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import SpaceDashboardOutlinedIcon from '@mui/icons-material/SpaceDashboardOutlined';
+import InboxOutlinedIcon from '@mui/icons-material/InboxOutlined';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
+import ScheduleIcon from '@mui/icons-material/Schedule';
+import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
+import AssignmentReturnOutlinedIcon from '@mui/icons-material/AssignmentReturnOutlined';
+import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
+import WarehouseOutlinedIcon from '@mui/icons-material/WarehouseOutlined';
+import PeopleOutlinedIcon from '@mui/icons-material/PeopleOutlined';
+import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
+import CurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange';
+import CalculateOutlinedIcon from '@mui/icons-material/CalculateOutlined';
+import LabelIcon from '@mui/icons-material/Label';
+import LogoutIcon from '@mui/icons-material/Logout';
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+import LanguageIcon from '@mui/icons-material/Language';
+import { PLATFORMS } from './constants';
+
+export const ordersUrl = (filter = {}) => `/orders?filter=${encodeURIComponent(JSON.stringify(filter))}`;
+
+const useCount = (resource, filter) => {
+  const { total } = useGetList(resource, { filter, pagination: { page: 1, perPage: 1 }, sort: { field: 'id', order: 'ASC' } });
+  return total;
+};
+
+const currentFilter = (search) => {
+  try { return JSON.parse(new URLSearchParams(search).get('filter') || '{}'); } catch { return {}; }
+};
+
+const Logo = ({ compact }) => (
+  <Box component={RouterLink} to="/" sx={{ display: 'flex', alignItems: 'center', gap: 1, textDecoration: 'none', color: 'gm.textSub', pr: 2 }}>
+    <svg width="34" height="34" viewBox="0 0 64 64" aria-hidden>
+      <rect width="64" height="64" rx="16" fill="#0e7490" />
+      <path d="M10 38c8-10 14-10 22 0s14 10 22 0" stroke="#c2e7ff" strokeWidth="7" fill="none" strokeLinecap="round" />
+    </svg>
+    {!compact && <Typography sx={{ fontSize: 22, color: 'text.secondary', letterSpacing: '-.2px' }}>Wavely</Typography>}
+  </Box>
+);
+
+const SearchBar = () => {
+  const navigate = useNavigate();
+  const [q, setQ] = useState('');
+  const [focus, setFocus] = useState(false);
+  return (
+    <Box component="form" onSubmit={(e) => { e.preventDefault(); navigate(ordersUrl(q.trim() ? { 'order_no@ilike': q.trim() } : {})); }}
+      sx={(t) => ({
+        flex: 1, maxWidth: 720, height: 48, display: 'flex', alignItems: 'center', borderRadius: 6, px: 0.5,
+        bgcolor: focus ? t.palette.gm.searchFocus : t.palette.gm.search,
+        boxShadow: focus ? '0 1px 1px 0 rgba(65,69,73,.3), 0 1px 3px 1px rgba(65,69,73,.15)' : 'none',
+        transition: 'background .2s, box-shadow .2s',
+      })}>
+      <IconButton type="submit" aria-label="搜索"><SearchIcon /></IconButton>
+      <InputBase placeholder="搜索订单号" value={q} onChange={(e) => setQ(e.target.value)} onFocus={() => setFocus(true)} onBlur={() => setFocus(false)}
+        sx={{ flex: 1, fontSize: 16 }} inputProps={{ 'aria-label': '搜索订单号' }} />
+      <Tooltip title="高级筛选"><IconButton component={RouterLink} to="/orders"><TuneIcon /></IconButton></Tooltip>
+    </Box>
+  );
+};
+
+const AppsMenu = () => {
+  const [el, setEl] = useState(null);
+  const base = 'https://xiaozhuangping-cpu.github.io';
+  return (
+    <>
+      <Tooltip title="应用"><IconButton onClick={(e) => setEl(e.currentTarget)}><AppsIcon /></IconButton></Tooltip>
+      <Menu anchorEl={el} open={!!el} onClose={() => setEl(null)}>
+        <MenuItem component="a" href={`${base}/`}><ListItemIcon><HomeOutlinedIcon /></ListItemIcon>作者博客</MenuItem>
+        <MenuItem component="a" href={`${base}/wavely-crossborder/`}><ListItemIcon><LanguageIcon /></ListItemIcon>演示入口</MenuItem>
+      </Menu>
+    </>
+  );
+};
+
+const UserAvatar = () => {
+  const [el, setEl] = useState(null);
+  const logout = useLogout();
+  return (
+    <>
+      <IconButton onClick={(e) => setEl(e.currentTarget)} sx={{ p: 0.5 }}>
+        <Avatar sx={{ width: 32, height: 32, bgcolor: '#0e7490', fontSize: 15 }}>访</Avatar>
+      </IconButton>
+      <Menu anchorEl={el} open={!!el} onClose={() => setEl(null)}>
+        <Box sx={{ px: 2, py: 1 }}>
+          <Typography sx={{ fontWeight: 600 }}>演示访客</Typography>
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>匿名登录 · 数据每日 03:00 重置</Typography>
+        </Box>
+        <Divider />
+        <MenuItem onClick={() => logout()}><ListItemIcon><LogoutIcon fontSize="small" /></ListItemIcon>退出演示</MenuItem>
+      </Menu>
+    </>
+  );
+};
+
+const TopBar = ({ onMenu }) => {
+  const small = useMediaQuery((t) => t.breakpoints.down('sm'));
+  return (
+    <Box component="header" sx={{ height: 64, display: 'flex', alignItems: 'center', gap: 1, px: { xs: 1, sm: 1.5 }, flexShrink: 0 }}>
+      <IconButton onClick={onMenu} aria-label="主菜单" sx={{ mr: { sm: 0.5 } }}><MenuIcon /></IconButton>
+      {!small && <Logo />}
+      <SearchBar />
+      <Box sx={{ flex: { md: 1 } }} />
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+        <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center' }}>
+          <LoadingIndicator />
+          <ToggleThemeButton />
+          <AppsMenu />
+        </Box>
+        <UserAvatar />
+      </Box>
+    </Box>
+  );
+};
+
+const NavItem = ({ to, icon, label, count, active, collapsed, onClick, bold }) => (
+  <Tooltip title={collapsed ? label : ''} placement="right">
+    <Box component={RouterLink} to={to} onClick={onClick}
+      sx={(t) => ({
+        display: 'flex', alignItems: 'center', gap: 2, height: 32, textDecoration: 'none', cursor: 'pointer',
+        color: active ? t.palette.gm.navActiveText : t.palette.text.primary,
+        bgcolor: active ? t.palette.gm.navActive : 'transparent',
+        fontWeight: active || bold ? 700 : 400, fontSize: 14,
+        borderRadius: collapsed ? '16px' : '0 16px 16px 0',
+        mx: collapsed ? 1.5 : 0, mr: collapsed ? 1.5 : 2,
+        pl: collapsed ? 0 : 3.25, pr: collapsed ? 0 : 1.5, justifyContent: collapsed ? 'center' : 'flex-start',
+        width: collapsed ? 48 : 'auto',
+        '&:hover': { bgcolor: active ? t.palette.gm.navActive : t.palette.gm.navHover },
+        '& svg': { fontSize: 20 },
+      })}>
+      {icon}
+      {!collapsed && <Box component="span" sx={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</Box>}
+      {!collapsed && count > 0 && <Box component="span" sx={{ fontSize: 12, fontWeight: 700 }}>{count.toLocaleString()}</Box>}
+    </Box>
+  </Tooltip>
+);
+
+const SectionTitle = ({ children, collapsed }) =>
+  collapsed ? <Divider sx={{ my: 1, mx: 2 }} /> : (
+    <Typography sx={{ fontSize: 16, fontWeight: 500, pl: 3.25, pt: 2, pb: 0.5, color: 'text.primary' }}>{children}</Typography>
+  );
+
+const Sidebar = ({ collapsed, onNavigate }) => {
+  const { pathname, search } = useLocation();
+  const f = currentFilter(search);
+  const onOrders = pathname.startsWith('/orders') && !pathname.includes('/show') ? true : false;
+  const paid = useCount('orders', { status: 'paid' });
+  const transit = useCount('orders', { 'status@in': '(shipped,in_transit)' });
+  const lowStock = useCount('v_inventory', { low_stock: true });
+  const { data: shops = [] } = useGetList('shops', { pagination: { page: 1, perPage: 20 }, sort: { field: 'id', order: 'ASC' } });
+
+  const isOrders = (pred) => onOrders && pred(f);
+  const items = [
+    { to: '/', icon: <SpaceDashboardOutlinedIcon />, label: '经营看板', active: pathname === '/' },
+    { to: ordersUrl(), icon: <InboxOutlinedIcon />, label: '全部订单', count: paid, bold: paid > 0,
+      active: isOrders((x) => !x.status && !x['status@in'] && !x.starred && !x.shop_id) },
+    { to: ordersUrl({ starred: true }), icon: <StarBorderIcon />, label: '星标订单', active: isOrders((x) => x.starred) },
+    { to: ordersUrl({ status: 'paid' }), icon: <ScheduleIcon />, label: '待发货', count: paid, active: isOrders((x) => x.status === 'paid') },
+    { to: ordersUrl({ 'status@in': '(shipped,in_transit)' }), icon: <LocalShippingOutlinedIcon />, label: '运输中', count: transit,
+      active: isOrders((x) => x['status@in'] === '(shipped,in_transit)') },
+    { to: ordersUrl({ 'status@in': '(refunded,cancelled)' }), icon: <AssignmentReturnOutlinedIcon />, label: '售后',
+      active: isOrders((x) => x['status@in'] === '(refunded,cancelled)') },
+  ];
+  const manage = [
+    { to: '/products', icon: <Inventory2OutlinedIcon />, label: '商品' },
+    { to: '/v_inventory', icon: <WarehouseOutlinedIcon />, label: '库存', count: lowStock },
+    { to: '/shipments', icon: <LocalShippingOutlinedIcon />, label: '物流' },
+    { to: '/customers', icon: <PeopleOutlinedIcon />, label: '客户' },
+    { to: '/shops', icon: <StorefrontOutlinedIcon />, label: '店铺' },
+    { to: '/exchange_rates', icon: <CurrencyExchangeIcon />, label: '汇率' },
+    { to: '/profit', icon: <CalculateOutlinedIcon />, label: '利润计算器' },
+  ].map((x) => ({ ...x, active: pathname.startsWith(x.to) || (x.to === '/v_inventory' && pathname.startsWith('/inventory')) }));
+
+  return (
+    <Box component="nav" sx={{ width: collapsed ? 72 : 256, flexShrink: 0, overflowY: 'auto', overflowX: 'hidden', pb: 2, transition: 'width .2s' }}>
+      <Box sx={{ px: collapsed ? 1 : 1, py: 1, pb: 2 }}>
+        <Box component={RouterLink} to="/products/create" onClick={onNavigate}
+          sx={(t) => ({
+            display: 'inline-flex', alignItems: 'center', gap: 1.5, height: 56, borderRadius: 4, textDecoration: 'none',
+            px: collapsed ? 0 : 2.5, width: collapsed ? 56 : 'auto', justifyContent: 'center', ml: collapsed ? 0 : 0,
+            bgcolor: t.palette.gm.compose, color: t.palette.gm.composeText, fontWeight: 500, fontSize: 14,
+            transition: 'box-shadow .15s', '&:hover': { boxShadow: '0 1px 3px 0 rgba(60,64,67,.3), 0 4px 8px 3px rgba(60,64,67,.15)' },
+          })}>
+          <EditOutlinedIcon />
+          {!collapsed && '新建商品'}
+        </Box>
+      </Box>
+      {items.map((x) => <NavItem key={x.label} {...x} collapsed={collapsed} onClick={onNavigate} />)}
+      <SectionTitle collapsed={collapsed}>管理</SectionTitle>
+      {manage.map((x) => <NavItem key={x.label} {...x} collapsed={collapsed} onClick={onNavigate} />)}
+      <SectionTitle collapsed={collapsed}>店铺标签</SectionTitle>
+      {shops.map((s) => (
+        <NavItem key={s.id} to={ordersUrl({ shop_id: s.id })} label={s.name} collapsed={collapsed} onClick={onNavigate}
+          active={isOrders((x) => x.shop_id === s.id)} icon={<LabelIcon sx={{ color: PLATFORMS[s.platform]?.color }} />} />
+      ))}
+    </Box>
+  );
+};
+
+export const GmailLayout = ({ children }) => {
+  const [open, setOpen] = useSidebarState();
+  const isMobile = useMediaQuery((t) => t.breakpoints.down('md'));
+  const [drawer, setDrawer] = useState(false);
+  const { pathname } = useLocation();
+
+  return (
+    <Box sx={{ height: '100dvh', display: 'flex', flexDirection: 'column', bgcolor: 'gm.bg', color: 'text.primary', overflow: 'hidden' }}>
+      <TopBar onMenu={() => (isMobile ? setDrawer(true) : setOpen(!open))} />
+      <Box sx={{ flex: 1, display: 'flex', minHeight: 0 }}>
+        {isMobile ? (
+          <Drawer open={drawer} onClose={() => setDrawer(false)} slotProps={{ paper: { sx: { bgcolor: 'gm.bg', width: 280 } } }}>
+            <Box sx={{ p: 2, pb: 1 }}><Logo /></Box>
+            <Sidebar collapsed={false} onNavigate={() => setDrawer(false)} />
+          </Drawer>
+        ) : (
+          <Sidebar collapsed={!open} />
+        )}
+        <Box component="main" id="main-content"
+          sx={{ flex: 1, minWidth: 0, overflow: 'auto', bgcolor: 'background.paper',
+                borderRadius: { md: 4 }, mr: { md: 2 }, mb: { md: 2 } }}>
+          {pathname.startsWith('/orders') ? children : <Box sx={{ px: { xs: 1.5, md: 3 }, pb: 10 }}>{children}</Box>}
+        </Box>
+      </Box>
+      {isMobile && !pathname.includes('/create') && (
+        <Fab variant="extended" component={RouterLink} to="/products/create"
+          sx={(t) => ({ position: 'fixed', right: 16, bottom: 20, bgcolor: t.palette.gm.compose, color: t.palette.gm.composeText, borderRadius: 4, '&:hover': { bgcolor: t.palette.gm.composeHover } })}>
+          <EditOutlinedIcon sx={{ mr: 1 }} />新建商品
+        </Fab>
+      )}
+      <CheckForApplicationUpdate />
+    </Box>
+  );
+};
