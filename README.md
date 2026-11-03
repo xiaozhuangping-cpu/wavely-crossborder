@@ -6,12 +6,16 @@
 
 - 在线访问：https://xiaozhuangping-cpu.github.io/wavely-crossborder/
 - ERP 后台：https://xiaozhuangping-cpu.github.io/wavely-crossborder/erp/
+- 独立站：https://xiaozhuangping-cpu.github.io/wavely-crossborder/shop/
 
 ## 结构
 
 ```
 erp/        跨境 ERP 后台（React + react-admin + ra-supabase-core + Recharts + assistant-ui）
-supabase/functions/ai-assistant/  AI 运营助手（DeepSeek，Deno 边缘函数）
+supabase/functions/ai-assistant/    ERP AI 运营助手
+supabase/functions/shop-assistant/  独立站 AI 客服（导购、查物流、政策问答，只读）
+supabase/functions/_shared/llm.ts   两者共用：鉴权、配额、DeepSeek 流式工具调用
+shop/       多语言独立站（React + MUI + assistant-ui，中/英/德/日/西，6 种币种）
 site/       演示入口页
 supabase/   数据库迁移：表结构、RLS、业务函数、演示数据、定时任务
 ```
@@ -50,5 +54,5 @@ cd erp && npm install && npm run dev
 
 ```bash
 supabase secrets set DEEPSEEK_API_KEY=...
-supabase functions deploy ai-assistant --no-verify-jwt
+supabase functions deploy ai-assistant shop-assistant --no-verify-jwt
 ```

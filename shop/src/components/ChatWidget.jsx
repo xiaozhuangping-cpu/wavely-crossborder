@@ -1,0 +1,209 @@
+import { useRef, useState } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
+import { AssistantRuntimeProvider, useLocalRuntime, ThreadPrimitive, MessagePrimitive, ComposerPrimitive, AuiIf } from '@assistant-ui/react';
+import { MarkdownTextPrimitive } from '@assistant-ui/react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Box, Fab, Paper, Stack, Typography, IconButton, Slide, Chip, useMediaQuery } from '@mui/material';
+import ChatBubbleOutlinedIcon from '@mui/icons-material/ChatBubbleOutlined';
+import CloseIcon from '@mui/icons-material/Close';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import StopIcon from '@mui/icons-material/Stop';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import { useStore, supabase, SUPABASE_URL, SUPABASE_KEY } from '../store';
+import { productTitle } from '../i18n';
+import { ProductArt, AddButton } from './ui';
+import { Timeline } from '../pages/Track';
+
+// ---------- 运行时：流式读取 shop-assistant 的 SSE ----------
+const toText = (m) => (m.content ?? []).map((p) =>
+  p.type === 'text' ? p.text : p.type === 'tool-call' ? `[tool ${p.toolName} result: ${JSON.stringify(p.result ?? {}).slice(0, 1000)}]` : '').filter(Boolean).join('\n');
+
+const makeAdapter = (getCtx) => ({
+  async *run({ messages, abortSignal }) {
+    let { data: { session } } = await supabase.auth.getSession();
+    if (!session) ({ data: { session } } = await supabase.auth.signInAnonymously());   // 访客首次提问时匿名登录
+    const { lang, currency } = getCtx();
+    const content = [];
+    const snap = () => ({ content: content.map((p) => ({ ...p })) });
+
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/shop-assistant`, {
+      method: 'POST', signal: abortSignal,
+      headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: `Bearer ${session?.access_token ?? ''}` },
+      body: JSON.stringify({ lang, currency, messages: messages.map((m) => ({ role: m.role, content: toText(m) })).filter((m) => m.content.trim()) }),
+    }).catch((e) => { if (e.name === 'AbortError') throw e; return null; });
+
+    if (!res || !res.ok || !res.headers.get('content-type')?.includes('text/event-stream')) {
+      const d = res ? await res.json().catch(() => ({})) : {};
+      yield { content: [{ type: 'text', text: `⚠️ ${d.error ?? 'Network error, please try again.'}` }] };
+      return;
+    }
+    const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+    let buf = '';
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += value;
+      let sep, changed = false;
+      while ((sep = buf.indexOf('\n\n')) >= 0) {
+        const line = buf.slice(0, sep).trim(); buf = buf.slice(sep + 2);
+        if (!line.startsWith('data:')) continue;
+        let ev; try { ev = JSON.parse(line.slice(5)); } catch { continue; }
+        if (ev.type === 'text') { const last = content.at(-1); if (last?.type === 'text') last.text += ev.delta; else content.push({ type: 'text', text: ev.delta }); }
+        else if (ev.type === 'tool') content.push({ type: 'tool-call', toolCallId: ev.part.toolCallId, toolName: ev.part.toolName, args: ev.part.args ?? {}, argsText: JSON.stringify(ev.part.args ?? {}), result: ev.part.result });
+        else if (ev.type === 'error') content.push({ type: 'text', text: `\n\n⚠️ ${ev.message}` });
+        changed = true;
+      }
+      if (changed) yield snap();
+    }
+    if (!content.length) content.push({ type: 'text', text: '' });
+    yield snap();
+  },
+});
+
+// ---------- 工具结果 UI ----------
+const ProductsTool = ({ result }) => {
+  const { lang, price } = useStore();
+  const rows = result?.rows ?? [];
+  if (!rows.length) return null;
+  return (
+    <Stack direction="row" spacing={1.25} sx={{ overflowX: 'auto', py: 1, mx: -0.5, px: 0.5, '&::-webkit-scrollbar': { height: 6 } }}>
+      {rows.map((p) => (
+        <Paper key={p.id} variant="outlined" sx={{ width: 168, flexShrink: 0, p: 1, borderRadius: 3 }}>
+          <Box component={RouterLink} to={`/p/${p.id}`} sx={{ textDecoration: 'none', color: 'inherit' }}>
+            <ProductArt p={p} sx={{ borderRadius: 2, '& span': { fontSize: '48px !important' } }} />
+            <Typography sx={{ fontSize: 13, fontWeight: 600, mt: 1, lineHeight: 1.3, height: 34, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{productTitle(p, lang)}</Typography>
+            <Typography sx={{ fontSize: 14, fontWeight: 700, color: 'primary.main', my: 0.5 }}>{price(p.price_usd)}</Typography>
+          </Box>
+          <AddButton id={p.id} size="small" fullWidth openCart={false} />
+        </Paper>
+      ))}
+    </Stack>
+  );
+};
+
+const TrackTool = ({ result }) => {
+  const { tr, lang } = useStore();
+  if (!result || result.not_found || result.error) return null;
+  return <Paper variant="outlined" sx={{ p: 1.5, my: 1, borderRadius: 3, '& li p': { fontSize: 13 } }}><Timeline data={result} tr={tr} lang={lang} /></Paper>;
+};
+
+const TOOLS = { search_products: ProductsTool, track_order: TrackTool };
+
+// ---------- 对话界面 ----------
+const Markdown = () => (
+  <Box sx={{ fontSize: 14, lineHeight: 1.6, '& p': { my: 0.5 }, '& ul, & ol': { pl: 2.5, my: 0.5 } }}>
+    <MarkdownTextPrimitive remarkPlugins={[remarkGfm]} />
+  </Box>
+);
+
+const UserMessage = () => (
+  <MessagePrimitive.Root>
+    <Box sx={{ display: 'flex', justifyContent: 'flex-end', my: 1 }}>
+      <Box sx={{ maxWidth: '85%', px: 1.75, py: 1, borderRadius: '18px 18px 4px 18px', bgcolor: 'primary.main', color: '#fff', fontSize: 14, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+        <MessagePrimitive.Parts />
+      </Box>
+    </Box>
+  </MessagePrimitive.Root>
+);
+
+const waiting = (s) => {
+  if (s.message.status?.type !== 'running') return false;
+  const parts = s.message.parts ?? s.message.content ?? [];
+  const last = parts[parts.length - 1];
+  return !last || last.type === 'tool-call' || (last.type === 'text' && !last.text);
+};
+
+const AssistantMessage = () => (
+  <MessagePrimitive.Root>
+    <Box sx={{ my: 1, maxWidth: '100%' }}>
+      <Box sx={{ display: 'inline-block', maxWidth: '100%', px: 1.75, py: 0.5, borderRadius: '18px 18px 18px 4px', bgcolor: '#f1efe9' }}>
+        <MessagePrimitive.Parts components={{ Text: Markdown, tools: { by_name: TOOLS, Fallback: () => null } }} />
+        <AuiIf condition={waiting}>
+          <Stack direction="row" spacing={0.6} sx={{ py: 1.2, '@keyframes blink': { '0%,80%,100%': { opacity: 0.25 }, '40%': { opacity: 1 } },
+            '& span': { width: 7, height: 7, borderRadius: '50%', bgcolor: 'text.secondary', animation: 'blink 1.2s infinite' }, '& span:nth-of-type(2)': { animationDelay: '.2s' }, '& span:nth-of-type(3)': { animationDelay: '.4s' } }}>
+            <span /><span /><span />
+          </Stack>
+        </AuiIf>
+      </Box>
+    </Box>
+  </MessagePrimitive.Root>
+);
+
+const ChatPanel = ({ onClose }) => {
+  const { tr } = useStore();
+  return (
+    <Stack sx={{ height: '100%' }}>
+      <Stack direction="row" sx={{ alignItems: 'center', gap: 1.25, px: 2, py: 1.5, bgcolor: 'primary.main', color: '#fff' }}>
+        <Box sx={{ width: 36, height: 36, borderRadius: '50%', bgcolor: 'rgba(255,255,255,.18)', display: 'grid', placeItems: 'center' }}><AutoAwesomeIcon fontSize="small" /></Box>
+        <Box sx={{ flex: 1 }}>
+          <Typography sx={{ fontWeight: 700, lineHeight: 1.2 }}>{tr.chatTitle}</Typography>
+          <Typography sx={{ fontSize: 12, opacity: 0.85 }}>● Online · AI</Typography>
+        </Box>
+        <IconButton onClick={onClose} sx={{ color: '#fff' }} aria-label="close"><CloseIcon /></IconButton>
+      </Stack>
+      <ThreadPrimitive.Root style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+        <ThreadPrimitive.Viewport style={{ flex: 1, overflowY: 'auto', padding: '8px 14px' }}>
+          <AuiIf condition={(s) => s.thread.isEmpty}>
+            <Box sx={{ py: 1 }}>
+              <Box sx={{ display: 'inline-block', px: 1.75, py: 1.25, borderRadius: '18px 18px 18px 4px', bgcolor: '#f1efe9', fontSize: 14 }}>
+                <b>{tr.chatHello}</b><br />{tr.chatSub}
+              </Box>
+              <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 0.75, mt: 1.5 }}>
+                {tr.sugg.map((q) => (
+                  <ThreadPrimitive.Suggestion key={q} prompt={q} send asChild>
+                    <Chip label={q} variant="outlined" color="primary" onClick={() => {}} sx={{ height: 'auto', py: 0.5, '& .MuiChip-label': { whiteSpace: 'normal' } }} />
+                  </ThreadPrimitive.Suggestion>
+                ))}
+              </Stack>
+            </Box>
+          </AuiIf>
+          <ThreadPrimitive.Messages components={{ UserMessage, AssistantMessage }} />
+        </ThreadPrimitive.Viewport>
+        <Box sx={{ p: 1.5, borderTop: 1, borderColor: 'divider' }}>
+          <ComposerPrimitive.Root>
+            <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1, bgcolor: '#f4f2ec', borderRadius: '22px', pl: 2, pr: 0.5, py: 0.5,
+              '& textarea': { flex: 1, border: 0, outline: 0, resize: 'none', bgcolor: 'transparent', font: 'inherit', fontSize: 14, py: 1, maxHeight: 120, color: 'text.primary' } }}>
+              <ComposerPrimitive.Input placeholder={tr.chatPlaceholder} rows={1} />
+              <AuiIf condition={(s) => !s.thread.isRunning}>
+                <ComposerPrimitive.Send asChild><IconButton color="primary" size="small" aria-label="send"><ArrowUpwardIcon fontSize="small" /></IconButton></ComposerPrimitive.Send>
+              </AuiIf>
+              <AuiIf condition={(s) => s.thread.isRunning}>
+                <ComposerPrimitive.Cancel asChild><IconButton size="small" aria-label="stop"><StopIcon fontSize="small" /></IconButton></ComposerPrimitive.Cancel>
+              </AuiIf>
+            </Box>
+          </ComposerPrimitive.Root>
+          <Typography sx={{ fontSize: 11, color: 'text.secondary', textAlign: 'center', mt: 0.75 }}>{tr.chatNote}</Typography>
+        </Box>
+      </ThreadPrimitive.Root>
+    </Stack>
+  );
+};
+
+export const ChatWidget = () => {
+  const store = useStore();
+  const [open, setOpen] = useState(false);
+  const mobile = useMediaQuery('(max-width:600px)');
+  // 语言/币种通过 ref 读取：切换语言不会重建对话
+  const ctx = useRef({});
+  ctx.current = { lang: store.lang, currency: store.currency };
+  const [adapter] = useState(() => makeAdapter(() => ctx.current));
+  const runtime = useLocalRuntime(adapter);
+
+  return (
+    <AssistantRuntimeProvider runtime={runtime}>
+      <Slide direction="up" in={open} mountOnEnter={false} unmountOnExit={false}>
+        <Paper elevation={12} sx={{ position: 'fixed', zIndex: 1300, overflow: 'hidden', display: 'flex', flexDirection: 'column',
+          ...(mobile ? { inset: 0, borderRadius: 0 } : { right: 24, bottom: 96, width: 380, height: 'min(620px, calc(100dvh - 140px))', borderRadius: 4 }),
+          visibility: open ? 'visible' : 'hidden' }}>
+          <ChatPanel onClose={() => setOpen(false)} />
+        </Paper>
+      </Slide>
+      {!(mobile && open) && (
+        <Fab color="primary" onClick={() => setOpen((v) => !v)} aria-label={store.tr.chatTitle}
+          sx={{ position: 'fixed', right: { xs: 16, sm: 24 }, bottom: { xs: 16, sm: 24 }, zIndex: 1300, width: 60, height: 60 }}>
+          {open ? <CloseIcon /> : <ChatBubbleOutlinedIcon />}
+        </Fab>
+      )}
+    </AssistantRuntimeProvider>
+  );
+};

@@ -23,15 +23,21 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: erp/package-lock.json
+          cache-dependency-path: |
+            erp/package-lock.json
+            shop/package-lock.json
       - name: Build ERP
         working-directory: erp
+        run: npm ci && npm run build
+      - name: Build shop
+        working-directory: shop
         run: npm ci && npm run build
       - name: Assemble site
         run: |
           mkdir -p _site
           cp -r site/. _site/
           cp -r erp/dist _site/erp
+          cp -r shop/dist _site/shop
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
