@@ -13,7 +13,7 @@ import { Box, Stack, Typography, IconButton, Tooltip, Select, MenuItem, useTheme
 import CloseIcon from '@mui/icons-material/Close';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import { SelectFilter, SelectFloatingFilter, passAll } from './filters';
+import { SelectFilter, passAll } from './filters';
 
 ModuleRegistry.registerModules([
   ClientSideRowModelModule, ClientSideRowModelApiModule, RowApiModule, RowSelectionModule, RowStyleModule, CellStyleModule,
@@ -25,6 +25,7 @@ if (import.meta.env.DEV) enableDevValidations();
 const LOCALE = {
   noRowsToShow: '暂无数据', loadingOoo: '加载中…', page: '页', of: '/', to: '-',
   contains: '包含', filterOoo: '筛选…', sortAscending: '升序', sortDescending: '降序',
+  ariaFilteringColumn: '筛选列', ariaColumnFiltered: '已筛选', columnFilter: '列筛选',
 };
 const DEFAULT_COL = { resizable: true, suppressHeaderMenuButton: true, cellStyle: { display: 'flex', alignItems: 'center' } };
 const ROW_SELECTION = { mode: 'multiRow', checkboxes: true, headerCheckbox: true, enableClickSelection: false };
@@ -44,22 +45,21 @@ const buildCol = ({ filterSpec, ...c }, sort) => {
     comparator: () => 0,          // 数据已由服务端排序
   };
   if (!filterSpec) return { ...base, floatingFilter: false };
-  const common = { floatingFilter: true, suppressFloatingFilterButton: true, suppressHeaderFilterButton: true };
+  // 筛选放在表头的弹出层里（点表头筛选图标打开），不常驻占位
+  const common = { floatingFilter: false, suppressHeaderFilterButton: false };
   if (filterSpec.type === 'select') {
     return {
       ...base, ...common,
       filter: { component: SelectFilter, doesFilterPass: passAll },
       filterParams: { choices: filterSpec.choices, placeholder: filterSpec.placeholder },
-      floatingFilterComponent: SelectFloatingFilter, floatingFilterComponentParams: { spec: filterSpec },
     };
   }
   return {
     ...base, ...common,
     filter: 'agTextColumnFilter',
-    filterParams: TEXT_FILTER_PARAMS,
     // 渲染器列没有 field 时，指定筛选取值（当前页的客户端过滤与服务端 ilike 结果一致）
     ...(filterSpec.value ? { filterValueGetter: filterSpec.value } : {}),
-    floatingFilterComponentParams: { filterPlaceholder: filterSpec.placeholder },
+    filterParams: { ...TEXT_FILTER_PARAMS, filterPlaceholder: filterSpec.placeholder },
   };
 };
 
@@ -97,7 +97,6 @@ export default function AgList({ columnDefs, rowClick, bulkActions, actions, row
   const specByCol = useMemo(() => Object.fromEntries(defs.filter((c) => c.filterSpec)
     .map((c) => [c.colId ?? c.field ?? c.filterSpec.source, c.filterSpec])), [defs]);
   const cols = useMemo(() => defs.map((c) => buildCol(c, sort)), [defs, sort]);
-  const hasFilters = Object.keys(specByCol).length > 0;
   const rowData = useMemo(() => data ?? [], [data]);
 
   // Gmail 配色的 Quartz 主题
@@ -208,7 +207,6 @@ export default function AgList({ columnDefs, rowClick, bulkActions, actions, row
           domLayout={fixedHeight ? 'normal' : 'autoHeight'}
           rowHeight={rowHeight}
           headerHeight={44}
-          floatingFiltersHeight={hasFilters ? 40 : 0}
           loading={isPending}
           localeText={LOCALE}
           rowSelection={bulkActions ? ROW_SELECTION : undefined}
