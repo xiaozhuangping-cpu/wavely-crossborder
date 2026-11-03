@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { AssistantRuntimeProvider, useLocalRuntime, ThreadPrimitive, MessagePrimitive, ComposerPrimitive, AuiIf } from '@assistant-ui/react';
 import { MarkdownTextPrimitive } from '@assistant-ui/react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -5,7 +6,7 @@ import { Box, IconButton, Typography, Tooltip, Stack } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import StopIcon from '@mui/icons-material/Stop';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import { Sparkle } from './Sparkle';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { deepseekAdapter } from './adapter';
 import { TOOL_UIS, ToolFallback } from './toolUIs';
@@ -18,9 +19,6 @@ const SUGGESTIONS = [
   { title: '发掉日本的待发货订单', prompt: '把所有待发货的日本订单准备发货' },
 ];
 
-export const Sparkle = ({ size = 20 }) => (
-  <AutoAwesomeIcon sx={{ fontSize: size, color: '#4f8cf7', filter: 'drop-shadow(0 0 0 transparent)' }} />
-);
 
 const MarkdownText = () => (
   <Box sx={{ fontSize: 14, lineHeight: 1.65, '& p': { my: 0.75 }, '& ul, & ol': { pl: 2.5, my: 0.5 }, '& li': { mb: 0.25 },
@@ -115,10 +113,33 @@ const Composer = () => (
   </Box>
 );
 
-export const AssistantProvider = ({ children }) => {
-  const runtime = useLocalRuntime(deepseekAdapter);
-  return <AssistantRuntimeProvider runtime={runtime}>{children}</AssistantRuntimeProvider>;
+// 对话持久化：刷新后恢复，24 小时过期（演示数据每日重置）
+const STORE_KEY = 'wv.erp.chat';
+const loadThread = () => {
+  try {
+    const d = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+    if (!d || Date.now() - d.at > 24 * 3600e3) return undefined;
+    return d.messages.map((m) => ({ ...m, createdAt: new Date(m.createdAt) }));
+  } catch { return undefined; }
 };
+const saveThread = (messages) => {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify({ at: Date.now(), messages: messages.slice(-30) })); } catch { /* 忽略 */ }
+};
+
+// 懒加载入口：运行时只在第一次打开面板时创建
+export default function AssistantPanelWithRuntime({ onClose }) {
+  const [initialMessages] = useState(loadThread);
+  const runtime = useLocalRuntime(deepseekAdapter, { initialMessages });
+  useEffect(() => runtime.thread.subscribe(() => {
+    const st = runtime.thread.getState();
+    if (!st.isRunning) saveThread(st.messages.map((m) => ({ id: m.id, role: m.role, content: m.content, createdAt: m.createdAt })));
+  }), [runtime]);
+  return (
+    <AssistantRuntimeProvider runtime={runtime}>
+      <AssistantPanel onClose={onClose} onReset={() => { saveThread([]); runtime.thread.reset(); }} />
+    </AssistantRuntimeProvider>
+  );
+}
 
 export const AssistantPanel = ({ onClose, onReset }) => (
   <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: 'background.paper', minWidth: 0 }}>

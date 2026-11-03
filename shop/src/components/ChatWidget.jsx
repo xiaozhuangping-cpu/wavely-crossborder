@@ -1,10 +1,10 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { AssistantRuntimeProvider, useLocalRuntime, ThreadPrimitive, MessagePrimitive, ComposerPrimitive, AuiIf } from '@assistant-ui/react';
 import { MarkdownTextPrimitive } from '@assistant-ui/react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Box, Fab, Paper, Stack, Typography, IconButton, Slide, Chip, useMediaQuery } from '@mui/material';
-import ChatBubbleOutlinedIcon from '@mui/icons-material/ChatBubbleOutlined';
+import { Box, Paper, Stack, Typography, IconButton, Slide, Chip, useMediaQuery, Tooltip } from '@mui/material';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import CloseIcon from '@mui/icons-material/Close';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import StopIcon from '@mui/icons-material/Stop';
@@ -129,7 +129,7 @@ const AssistantMessage = () => (
   </MessagePrimitive.Root>
 );
 
-const ChatPanel = ({ onClose }) => {
+const ChatPanel = ({ onClose, onReset }) => {
   const { tr } = useStore();
   return (
     <Stack sx={{ height: '100%' }}>
@@ -139,6 +139,7 @@ const ChatPanel = ({ onClose }) => {
           <Typography sx={{ fontWeight: 700, lineHeight: 1.2 }}>{tr.chatTitle}</Typography>
           <Typography sx={{ fontSize: 12, opacity: 0.85 }}>● Online · AI</Typography>
         </Box>
+        <Tooltip title="New chat"><IconButton onClick={onReset} sx={{ color: '#fff' }} aria-label="new chat"><RestartAltIcon /></IconButton></Tooltip>
         <IconButton onClick={onClose} sx={{ color: '#fff' }} aria-label="close"><CloseIcon /></IconButton>
       </Stack>
       <ThreadPrimitive.Root style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
@@ -179,31 +180,45 @@ const ChatPanel = ({ onClose }) => {
   );
 };
 
-export const ChatWidget = () => {
+// 对话持久化：刷新后恢复，24 小时过期（演示数据每日重置）
+const STORE_KEY = 'wv.chat';
+const loadThread = () => {
+  try {
+    const d = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+    if (!d || Date.now() - d.at > 24 * 3600e3) return undefined;
+    return d.messages.map((m) => ({ ...m, createdAt: new Date(m.createdAt) }));
+  } catch { return undefined; }
+};
+const saveThread = (messages) => {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify({ at: Date.now(), messages: messages.slice(-30) })); } catch { /* 忽略 */ }
+};
+
+// 懒加载的对话窗口：由 ChatLauncher 在第一次打开时加载
+export default function ChatWindow({ open, onClose }) {
   const store = useStore();
-  const [open, setOpen] = useState(false);
   const mobile = useMediaQuery('(max-width:600px)');
   // 语言/币种通过 ref 读取：切换语言不会重建对话
   const ctx = useRef({});
   ctx.current = { lang: store.lang, currency: store.currency };
   const [adapter] = useState(() => makeAdapter(() => ctx.current));
-  const runtime = useLocalRuntime(adapter);
+  const [initialMessages] = useState(loadThread);
+  const runtime = useLocalRuntime(adapter, { initialMessages });
+
+  useEffect(() => runtime.thread.subscribe(() => {
+    const st = runtime.thread.getState();
+    if (st.isRunning) return;
+    saveThread(st.messages.map((m) => ({ id: m.id, role: m.role, content: m.content, createdAt: m.createdAt })));
+  }), [runtime]);
 
   return (
     <AssistantRuntimeProvider runtime={runtime}>
-      <Slide direction="up" in={open} mountOnEnter={false} unmountOnExit={false}>
+      <Slide direction="up" in={open} appear>
         <Paper elevation={12} sx={{ position: 'fixed', zIndex: 1300, overflow: 'hidden', display: 'flex', flexDirection: 'column',
           ...(mobile ? { inset: 0, borderRadius: 0 } : { right: 24, bottom: 96, width: 380, height: 'min(620px, calc(100dvh - 140px))', borderRadius: 4 }),
           visibility: open ? 'visible' : 'hidden' }}>
-          <ChatPanel onClose={() => setOpen(false)} />
+          <ChatPanel onClose={onClose} onReset={() => { saveThread([]); runtime.thread.reset?.(); }} />
         </Paper>
       </Slide>
-      {!(mobile && open) && (
-        <Fab color="primary" onClick={() => setOpen((v) => !v)} aria-label={store.tr.chatTitle}
-          sx={{ position: 'fixed', right: { xs: 16, sm: 24 }, bottom: { xs: 16, sm: 24 }, zIndex: 1300, width: 60, height: 60 }}>
-          {open ? <CloseIcon /> : <ChatBubbleOutlinedIcon />}
-        </Fab>
-      )}
     </AssistantRuntimeProvider>
   );
-};
+}

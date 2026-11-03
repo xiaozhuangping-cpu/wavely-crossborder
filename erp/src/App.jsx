@@ -12,7 +12,12 @@ import { i18nProvider } from './i18n';
 import { lightTheme, darkTheme } from './theme';
 import { GmailLayout } from './GmailLayout';
 import { LoginPage } from './LoginPage';
-import { Dashboard } from './Dashboard';
+import { lazy, Suspense } from 'react';
+import { LinearProgress } from '@mui/material';
+
+// 看板依赖 recharts，单独拆包
+const DashboardImpl = lazy(() => import('./Dashboard').then((m) => ({ default: m.Dashboard })));
+const Dashboard = () => <Suspense fallback={<LinearProgress sx={{ m: 2 }} />}><DashboardImpl /></Suspense>;
 import { ProfitCalculator } from './ProfitCalculator';
 import { OrderList, OrderShow, OrderEdit } from './resources/orders';
 import { ProductList, ProductEdit, ProductCreate } from './resources/products';

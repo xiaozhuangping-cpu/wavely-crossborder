@@ -6,10 +6,10 @@ import { supabase } from './supabase';
 import { PLATFORMS, COUNTRIES, ORDER_STATUS, fmtMoney } from './constants';
 
 const Kpi = ({ label, value, hint, color = 'primary.main' }) => (
-  <Card sx={{ height: '100%' }}>
+  <Card sx={{ height: '100%', containerType: 'inline-size' }}>
     <CardContent>
       <Typography variant="body2" sx={{ color: 'text.secondary' }}>{label}</Typography>
-      <Typography variant="h4" sx={{ fontWeight: 800, color: color, my: 0.5, fontSize: 'clamp(1.05rem, 1.7vw, 2rem)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</Typography>
+      <Typography variant="h4" sx={{ fontWeight: 800, color: color, my: 0.5, fontSize: 'clamp(1.05rem, 11cqi, 2rem)', whiteSpace: 'nowrap' }}>{value}</Typography>
       {hint && <Typography variant="caption" sx={{ color: 'text.secondary' }}>{hint}</Typography>}
     </CardContent>
   </Card>

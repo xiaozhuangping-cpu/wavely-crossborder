@@ -4,7 +4,7 @@ import { ThemeProvider, CssBaseline, Box } from '@mui/material';
 import { theme } from './theme';
 import { StoreProvider } from './store';
 import { Header, CartDrawer, Footer } from './components/Layout';
-import { ChatWidget } from './components/ChatWidget';
+import { ChatWidget } from './components/ChatLauncher';
 import { Home } from './pages/Home';
 import { Product } from './pages/Product';
 import { Checkout, Done } from './pages/Checkout';

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import { useSidebarState, useGetList, LoadingIndicator, ToggleThemeButton, useLogout, CheckForApplicationUpdate } from 'react-admin';
 import {
@@ -26,7 +26,10 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import LanguageIcon from '@mui/icons-material/Language';
 import { PLATFORMS } from './constants';
-import { AssistantProvider, AssistantPanel, Sparkle } from './ai/AssistantPanel';
+import { Sparkle } from './ai/Sparkle';
+
+// AI 面板（assistant-ui、Markdown、图表）首次打开时才加载
+const AssistantPanel = lazy(() => import('./ai/AssistantPanel'));
 
 export const ordersUrl = (filter = {}) => `/orders?filter=${encodeURIComponent(JSON.stringify(filter))}`;
 
@@ -222,14 +225,17 @@ export const GmailLayout = ({ children }) => {
   const isMobile = useMediaQuery((t) => t.breakpoints.down('md'));
   const [drawer, setDrawer] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
-  const [aiKey, setAiKey] = useState(0);         // 改变 key = 开启新对话
+  const [aiLoaded, setAiLoaded] = useState(false);
   const { pathname } = useLocation();
-  const panel = <AssistantPanel onClose={() => setAiOpen(false)} onReset={() => setAiKey((k) => k + 1)} />;
+  const panel = aiLoaded && (
+    <Suspense fallback={<Box sx={{ flex: 1, display: 'grid', placeItems: 'center', bgcolor: 'background.paper' }}><Sparkle size={28} /></Box>}>
+      <AssistantPanel onClose={() => setAiOpen(false)} />
+    </Suspense>
+  );
 
   return (
-    <AssistantProvider key={aiKey}>
     <Box sx={{ height: '100dvh', display: 'flex', flexDirection: 'column', bgcolor: 'gm.bg', color: 'text.primary', overflow: 'hidden' }}>
-      <TopBar onMenu={() => (isMobile ? setDrawer(true) : setOpen(!open))} onAi={() => setAiOpen((v) => !v)} aiOpen={aiOpen} />
+      <TopBar onMenu={() => (isMobile ? setDrawer(true) : setOpen(!open))} onAi={() => { setAiLoaded(true); setAiOpen((v) => !v); }} aiOpen={aiOpen} />
       <Box sx={{ flex: 1, display: 'flex', minHeight: 0 }}>
         {isMobile ? (
           <Drawer open={drawer} onClose={() => setDrawer(false)} slotProps={{ paper: { sx: { bgcolor: 'gm.bg', width: 280 } } }}>
@@ -265,6 +271,5 @@ export const GmailLayout = ({ children }) => {
       )}
       <CheckForApplicationUpdate />
     </Box>
-    </AssistantProvider>
   );
 };

@@ -1,5 +1,8 @@
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { Box, Typography, IconButton, Badge, Select, MenuItem, Drawer, Stack, Button, Divider, Link } from '@mui/material';
+import { useState } from 'react';
+import { Box, Typography, IconButton, Badge, Select, MenuItem, Drawer, Stack, Button, Divider, Link, Menu, ListSubheader, ListItemIcon } from '@mui/material';
+import LanguageIcon from '@mui/icons-material/Language';
+import CheckIcon from '@mui/icons-material/Check';
 import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
 import CloseIcon from '@mui/icons-material/Close';
@@ -26,6 +29,30 @@ const Picker = ({ value, onChange, options, label }) => (
   </Select>
 );
 
+// 小屏：语言 + 币种合并到一个菜单
+const LocaleMenu = () => {
+  const { lang, setLang, currency, setCurrency } = useStore();
+  const [el, setEl] = useState(null);
+  const item = (on, label, onClick) => (
+    <MenuItem key={label} onClick={() => { onClick(); setEl(null); }} dense>
+      <ListItemIcon>{on && <CheckIcon fontSize="small" />}</ListItemIcon>{label}
+    </MenuItem>
+  );
+  return (
+    <>
+      <Button onClick={(e) => setEl(e.currentTarget)} color="inherit" startIcon={<LanguageIcon />} sx={{ px: 1, minWidth: 0, fontSize: 13 }}>
+        {lang.toUpperCase()} · {currency}
+      </Button>
+      <Menu anchorEl={el} open={!!el} onClose={() => setEl(null)}>
+        <ListSubheader>Language</ListSubheader>
+        {Object.entries(LANGS).map(([k, v]) => item(k === lang, v, () => setLang(k)))}
+        <ListSubheader>Currency</ListSubheader>
+        {CURRENCIES.map((c) => item(c === currency, c, () => setCurrency(c)))}
+      </Menu>
+    </>
+  );
+};
+
 export const Header = () => {
   const { lang, setLang, currency, setCurrency, count, setCartOpen, tr } = useStore();
   return (
@@ -34,10 +61,13 @@ export const Header = () => {
       <Stack direction="row" sx={{ maxWidth: 1200, mx: 'auto', px: 2, height: 64, alignItems: 'center', gap: { xs: 0.5, sm: 2 } }}>
         <Logo />
         <Box sx={{ flex: 1 }} />
-        <Button component={RouterLink} to="/track" startIcon={<LocalShippingOutlinedIcon />} color="inherit" sx={{ display: { xs: 'none', sm: 'inline-flex' } }}>{tr.track}</Button>
-        <IconButton component={RouterLink} to="/track" sx={{ display: { xs: 'inline-flex', sm: 'none' } }} aria-label={tr.track}><LocalShippingOutlinedIcon /></IconButton>
-        <Picker value={lang} onChange={setLang} label="Language" options={Object.entries(LANGS)} />
-        <Picker value={currency} onChange={setCurrency} label="Currency" options={CURRENCIES.map((c) => [c, c])} />
+        <Button component={RouterLink} to="/track" startIcon={<LocalShippingOutlinedIcon />} color="inherit" sx={{ display: { xs: 'none', md: 'inline-flex' } }}>{tr.track}</Button>
+        <IconButton component={RouterLink} to="/track" sx={{ display: { xs: 'inline-flex', md: 'none' } }} aria-label={tr.track}><LocalShippingOutlinedIcon /></IconButton>
+        <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 2 }}>
+          <Picker value={lang} onChange={setLang} label="Language" options={Object.entries(LANGS)} />
+          <Picker value={currency} onChange={setCurrency} label="Currency" options={CURRENCIES.map((c) => [c, c])} />
+        </Box>
+        <Box sx={{ display: { xs: 'block', md: 'none' } }}><LocaleMenu /></Box>
         <IconButton onClick={() => setCartOpen(true)} aria-label={tr.cart}>
           <Badge badgeContent={count} color="secondary"><ShoppingBagOutlinedIcon /></Badge>
         </IconButton>
