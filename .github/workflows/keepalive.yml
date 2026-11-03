@@ -1,0 +1,15 @@
+# Supabase 免费项目 7 天无访问会自动暂停，这里每 3 天访问一次保持唤醒
+name: Supabase keep-alive
+
+on:
+  schedule:
+    - cron: '0 2 */3 * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl -fsS "https://wzxwssipzychiyygzcpd.supabase.co/rest/v1/shops?select=id&limit=1" \
+            -H "apikey: sb_publishable_4lfpfSj-OMA20HNBWw4zEg_5AeJZSdo" > /dev/null && echo ok

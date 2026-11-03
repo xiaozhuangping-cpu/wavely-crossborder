@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wavely 跨境电商演示</title>
+  <meta name="description" content="跨境电商全链路演示：ERP 后台、多语言独立站、选品插件" />
+  <style>
+    :root { --bg:#f4f7f8; --card:#fff; --text:#0f172a; --muted:#64748b; --line:#e2e8f0; --brand:#0e7490; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#0b1416; --card:#13201f; --text:#e2e8f0; --muted:#94a3b8; --line:#1f2f30; --brand:#22d3ee; } }
+    * { box-sizing:border-box; margin:0; }
+    body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); line-height:1.7; padding:clamp(32px,8vw,96px) 16px; }
+    main { max-width:960px; margin:0 auto; }
+    .eyebrow { color:var(--brand); letter-spacing:.2em; font-size:.8rem; font-weight:700; text-transform:uppercase; }
+    h1 { font-size:clamp(2rem,6vw,3.2rem); line-height:1.2; margin:8px 0 12px; }
+    p.lead { color:var(--muted); max-width:640px; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px; margin-top:40px; }
+    a.card, div.card { display:block; padding:24px; border-radius:16px; background:var(--card); border:1px solid var(--line); color:inherit; text-decoration:none; transition:transform .2s, border-color .2s; }
+    a.card:hover { transform:translateY(-4px); border-color:var(--brand); }
+    .card h2 { font-size:1.2rem; margin:8px 0 4px; }
+    .card p { color:var(--muted); font-size:.92rem; }
+    .tag { display:inline-block; font-size:.75rem; padding:2px 10px; border-radius:999px; border:1px solid var(--line); color:var(--muted); }
+    .live { color:#16a34a; border-color:#16a34a55; }
+    footer { margin-top:56px; color:var(--muted); font-size:.85rem; }
+    footer a { color:var(--brand); }
+  </style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">Wavely 海浪优选 · Cross-border Demo</p>
+  <h1>跨境电商全链路演示</h1>
+  <p class="lead">一个虚构的跨境品牌，从后台到前台完整跑通：多平台订单、海外仓库存、物流轨迹、多币种利润。后端基于 Supabase，数据每天自动重置。</p>
+  <div class="grid">
+    <a class="card" href="erp/">
+      <span class="tag live">● 在线</span>
+      <h2>🗂️ 跨境 ERP 后台</h2>
+      <p>Amazon / Shopee / TikTok Shop / 独立站订单统一管理，发货、库存预警、利润计算器。</p>
+    </a>
+    <div class="card">
+      <span class="tag">开发中</span>
+      <h2>🌐 多语言独立站</h2>
+      <p>中英日西多语言、多币种结算，下单实时同步到 ERP。</p>
+    </div>
+    <div class="card">
+      <span class="tag">开发中</span>
+      <h2>🧩 选品比价插件</h2>
+      <p>浏览 Amazon 商品页时一键估算利润、采集商品。</p>
+    </div>
+  </div>
+  <footer>by <a href="https://xiaozhuangping-cpu.github.io/">小庄 Studio</a> · React · react-admin · Supabase · GitHub Pages</footer>
+</main>
+</body>
+</html>
