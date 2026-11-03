@@ -21,7 +21,7 @@ export const ProductArt = ({ p, src, size = 'md', sx }) => {
   const url = src || p?.image_url;
   if (url && !err) {
     return (
-      <Box sx={{ position: 'relative', aspectRatio: '1 / 1', borderRadius: 3, overflow: 'hidden', bgcolor: '#fff', border: '1px solid #f0ece4', ...sx }}>
+      <Box sx={{ position: 'relative', aspectRatio: '1 / 1', borderRadius: 3, overflow: 'hidden', bgcolor: '#fff', ...sx }}>
         <Box component="img" src={url} alt={p?.name?.en ?? ''} loading="lazy" onError={() => setErr(true)}
           sx={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
       </Box>

@@ -31,7 +31,7 @@ export const ImageZoom = ({ src, alt, paneWidth }) => {
     <Box>
       <Box ref={box} onMouseMove={desktopZoom ? onMove : undefined} onMouseLeave={() => setPos(null)}
         onClick={desktopZoom ? undefined : () => setOpen(true)}
-        sx={{ position: 'relative', aspectRatio: '1 / 1', bgcolor: '#fff', borderRadius: 5, border: '1px solid #f0ece4',
+        sx={{ position: 'relative', aspectRatio: '1 / 1', bgcolor: '#fff', borderRadius: 5,
           cursor: desktopZoom ? 'crosshair' : 'zoom-in', userSelect: 'none' }}>
         <Box component="img" src={src} alt={alt} draggable={false} sx={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', borderRadius: 5 }} />
 
@@ -44,7 +44,7 @@ export const ImageZoom = ({ src, alt, paneWidth }) => {
         {/* 放大窗口：贴在图片右侧，覆盖商品信息 */}
         {desktopZoom && pos && (
           <Box aria-hidden sx={{ position: 'absolute', zIndex: 20, top: 0, left: 'calc(100% + 24px)', width: paneWidth ?? '110%', aspectRatio: '1 / 1',
-            bgcolor: '#fff', borderRadius: 3, border: '1px solid #e7e2d8', boxShadow: '0 20px 50px rgba(16,32,31,.18)', pointerEvents: 'none',
+            bgcolor: '#fff', borderRadius: 3, boxShadow: '0 20px 50px rgba(16,32,31,.18)', pointerEvents: 'none',
             backgroundImage: `url("${src}")`, backgroundRepeat: 'no-repeat', backgroundSize: `${ZOOM * 100}%`,
             backgroundPosition: `${((pos.x - lens / 2) / (1 - lens)) * 100}% ${((pos.y - lens / 2) / (1 - lens)) * 100}%` }} />
         )}
@@ -89,7 +89,7 @@ export const Thumbs = ({ items, activeSrc, onHover, onPick }) => (
     {items.map((it) => (
       <Box key={it.src} component="button" type="button" onMouseEnter={() => onHover?.(it)} onClick={() => onPick?.(it)} aria-label={it.label}
         sx={{ width: 56, height: 56, p: 0.5, flexShrink: 0, bgcolor: '#fff', borderRadius: 2, cursor: 'pointer',
-          border: it.src === activeSrc ? '2px solid #0e7490' : '1px solid #e7e2d8', boxShadow: it.src === activeSrc ? '0 0 0 3px rgba(14,116,144,.15)' : 'none' }}>
+          border: 0, boxShadow: it.src === activeSrc ? '0 0 0 2px #0e7490' : 'none' }}>
         <Box component="img" src={it.src} alt="" loading="lazy" sx={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
       </Box>
     ))}

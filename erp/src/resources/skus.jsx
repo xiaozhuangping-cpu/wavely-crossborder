@@ -28,7 +28,7 @@ const SKU_STATUS = [{ id: 'active', name: '在售' }, { id: 'inactive', name: '�
 export const Thumb = ({ src, size = 44 }) => {
   const [err, setErr] = useState(false);
   return (
-    <Box sx={{ width: size, height: size, borderRadius: 1.5, bgcolor: '#fff', border: 1, borderColor: 'divider', overflow: 'hidden', flexShrink: 0, display: 'grid', placeItems: 'center' }}>
+    <Box sx={{ width: size, height: size, borderRadius: 1.5, bgcolor: '#fff', overflow: 'hidden', flexShrink: 0, display: 'grid', placeItems: 'center' }}>
       {src && !err
         ? <Box component="img" src={src} alt="" loading="lazy" onError={() => setErr(true)} sx={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         : <Typography sx={{ fontSize: size * 0.4, opacity: 0.4 }}>📦</Typography>}

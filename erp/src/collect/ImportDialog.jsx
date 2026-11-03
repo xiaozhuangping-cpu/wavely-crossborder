@@ -20,7 +20,7 @@ const suggestPrice = (costCny, g, cny, margin) => {
 const marginOf = (price, costCny, g, cny) => (price ? (price * (1 - FEE) - costCny * cny - freightUsd(g, cny)) / price : null);
 
 export const Img = ({ src, size = 40 }) => (
-  <Box sx={{ width: size, height: size, borderRadius: 1, overflow: 'hidden', bgcolor: '#fff', border: 1, borderColor: 'divider', flexShrink: 0, display: 'grid', placeItems: 'center' }}>
+  <Box sx={{ width: size, height: size, borderRadius: 1, overflow: 'hidden', bgcolor: '#fff', flexShrink: 0, display: 'grid', placeItems: 'center' }}>
     {src ? <Box component="img" src={src} alt="" loading="lazy" referrerPolicy="no-referrer" sx={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ opacity: 0.4 }}>📦</span>}
   </Box>
 );
