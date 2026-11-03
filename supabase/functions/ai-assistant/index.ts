@@ -3,7 +3,7 @@
 // - 写操作只生成「提案」，由前端展示确认卡片、用户确认后再执行
 // - 每位访客每天 30 次、全站每天 1500 次调用上限
 import type { SupabaseClient } from 'npm:@supabase/supabase-js@2';
-import { handleChat, today } from '../_shared/llm.ts';
+import { handleChat, today, complete, parseJson, type ActionCtx } from '../_shared/llm.ts';
 
 const systemPrompt = () => `你是「Wavely 跨境 ERP」里的 AI 运营助手，服务一家在 Amazon / Shopee / TikTok Shop / 独立站卖货的跨境品牌。
 今天是 ${today()}（北京时间）。系统里有最近约 90 天的演示数据，金额统一折算为美元。
@@ -101,8 +101,35 @@ async function runTool(db: SupabaseClient, name: string, a: Record<string, any>)
   }
 }
 
+// 批量把 1688 标题改写为多语言商品名（采集箱批量导入用）
+const LANGS = ['zh', 'en', 'de', 'ja', 'es'] as const;
+async function translateNames({ body, llm }: ActionCtx) {
+  const items = (Array.isArray(body.items) ? body.items : []).slice(0, 20)
+    .map((x: any) => ({ id: String(x?.id ?? ''), title: String(x?.title ?? '').slice(0, 200) }))
+    .filter((x) => x.id && x.title);
+  if (!items.length) throw new Error('没有需要翻译的商品');
+  const text = await complete(llm, [
+    { role: 'system', content: `你是跨境电商商品文案编辑。输入是 1688 批发商品标题（常堆砌关键词、营销词、批发用语）。
+为每个商品写简洁的商品名：
+- zh：中文名 ≤ 20 字；en / de / es：≤ 60 个字符，符合当地电商标题习惯，首字母大写；ja：≤ 30 字
+- 去掉营销词（爆款、新款、2026 年份、ins 风、网红等）、批发用语（厂家、批发、一件代发、跨境、货源）和尺码体重说明
+- 保留品类、关键材质与卖点；不要编造原标题没有的信息
+只输出 JSON：{"items":[{"id":"…","zh":"…","en":"…","de":"…","ja":"…","es":"…"}]}，id 原样返回。` },
+    { role: 'user', content: JSON.stringify({ items }) },
+  ], { json: true, maxTokens: 200 + items.length * 220 });
+  const out = parseJson(text);
+  const byId = new Map(items.map((x) => [x.id, x]));
+  return {
+    items: (Array.isArray(out?.items) ? out.items : []).filter((x: any) => byId.has(String(x?.id))).map((x: any) => ({
+      id: String(x.id),
+      ...Object.fromEntries(LANGS.map((l) => [l, String(x[l] ?? '').trim().slice(0, l === 'zh' || l === 'ja' ? 40 : 120)]).filter(([, v]) => v)),
+    })),
+  };
+}
+
 Deno.serve((req) => handleChat(req, {
   systemPrompt, tools, runTool,
+  actions: { translate_names: translateNames },
   isProposal: (r) => !!r?.pending_confirmation,
   messages: { tooMany: '你今天的内置 AI 额度（30 次）已用完。可以点右上角 ⚙ 填自己的 API Key 继续使用，或明天再来' },
 }));

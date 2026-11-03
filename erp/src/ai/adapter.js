@@ -7,6 +7,15 @@ const authHeaders = async () => {
   return { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: `Bearer ${session?.access_token ?? ''}` };
 };
 
+/** 批量改写多语言商品名：items = [{id, title}]（每次最多 20 个），返回 {id: {zh,en,de,ja,es}} */
+export async function translateNames(items) {
+  const res = await fetch(FN_URL, { method: 'POST', headers: await authHeaders(), body: JSON.stringify({ action: 'translate_names', items, llm: llmPayload() }) })
+    .catch(() => { throw new Error('网络异常，请稍后再试'); });
+  const d = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(d.error ?? `HTTP ${res.status}`);
+  return Object.fromEntries((d.items ?? []).map(({ id, ...names }) => [id, names]));
+}
+
 /** 经边缘函数拉取自定义服务的模型列表（供设置对话框使用） */
 export async function fetchModels(llm) {
   const res = await fetch(FN_URL, { method: 'POST', headers: await authHeaders(), body: JSON.stringify({ action: 'models', llm }) })

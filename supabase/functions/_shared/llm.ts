@@ -65,7 +65,38 @@ export const today = () => new Date(Date.now() + 8 * 3600e3).toISOString().slice
 
 type Body = { messages?: { role: string; content: string }[]; [k: string]: unknown };
 
+/** 非流式调用一次模型，返回文本内容（供翻译等一次性任务使用） */
+export async function complete(llm: Llm, messages: unknown[], opts: { json?: boolean; maxTokens?: number } = {}) {
+  const openai = new URL(llm.base).hostname === 'api.openai.com';
+  const res = await fetch(`${llm.base}/chat/completions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${llm.key}` },
+    body: JSON.stringify({
+      model: llm.model, messages, stream: false,
+      ...(openai ? { max_completion_tokens: opts.maxTokens ?? 3000 } : { temperature: 0.3, max_tokens: opts.maxTokens ?? 3000 }),
+      // 内置 DeepSeek 支持 JSON 模式；自定义服务不一定支持，只靠提示词约束
+      ...(opts.json && !llm.own ? { response_format: { type: 'json_object' } } : {}),
+    }),
+  });
+  if (!res.ok) throw new Error(await upstreamError(res, llm.own));
+  const d = await res.json();
+  return String(d.choices?.[0]?.message?.content ?? '');
+}
+
+/** 从模型输出里取出 JSON（兼容 ```json 代码块、前后多余文字） */
+export function parseJson(text: string): any {
+  const t = text.replace(/^```(?:json)?\s*|\s*```$/g, '').trim();
+  try { return JSON.parse(t); } catch { /* 继续尝试截取 */ }
+  const a = t.indexOf('{'), b = t.lastIndexOf('}');
+  if (a >= 0 && b > a) return JSON.parse(t.slice(a, b + 1));
+  throw new Error('模型没有返回有效的 JSON / Model returned invalid JSON');
+}
+
+export type ActionCtx = { body: Body; llm: Llm; db: SupabaseClient };
+
 export type ChatConfig = {
+  /** 非对话的一次性操作（如批量翻译），通过 body.action 调用；内置模型每次计 1 次配额 */
+  actions?: Record<string, (ctx: ActionCtx) => Promise<unknown>>;
   systemPrompt: (body: Body) => string;
   tools: unknown[];
   runTool: (db: SupabaseClient, name: string, args: Record<string, any>) => Promise<unknown>;
@@ -105,21 +136,33 @@ export async function handleChat(req: Request, cfg: ChatConfig): Promise<Respons
     return json({ models: models.slice(0, 300) });
   }
 
+  // 只有使用内置模型才计配额；自带 Key 的调用费用由访客自己承担
+  const takeQuota = async () => {
+    if (llm.own) return { ok: true, quota: null };
+    const admin = createClient(url, service, { auth: { persistSession: false } });
+    const { data, error: qErr } = await admin.rpc('ai_take_quota', { p_user: user.id });
+    if (qErr) return { ok: false, res: json({ error: 'Quota check failed' }, 500) };
+    if (!data.ok) return { ok: false, res: json({ error: cfg.messages?.tooMany ?? '今天的 AI 演示额度已用完，明天再来试试吧', code: 'quota' }, 429) };
+    return { ok: true, quota: data as { used?: number; limit?: number } };
+  };
+
+  const action = typeof body.action === 'string' ? cfg.actions?.[body.action] : undefined;
+  if (action) {
+    const q = await takeQuota();
+    if (!q.ok) return q.res!;
+    try { return json(await action({ body, llm, db })); }
+    catch (e) { console.error(e); return json({ error: (e as Error).message }, 502); }
+  }
+
   const history = (body.messages ?? [])
     .filter((m) => (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.trim())
     .slice(-12)
     .map((m) => ({ role: m.role, content: m.content.slice(0, 6000) }));
   if (!history.length || history[history.length - 1].role !== 'user') return json({ error: 'Missing user message' }, 400);
 
-  // 只有使用内置模型才计配额；自带 Key 的调用费用由访客自己承担
-  let quota: { used?: number; limit?: number } | null = null;
-  if (!llm.own) {
-    const admin = createClient(url, service, { auth: { persistSession: false } });
-    const { data, error: qErr } = await admin.rpc('ai_take_quota', { p_user: user.id });
-    if (qErr) return json({ error: 'Quota check failed' }, 500);
-    if (!data.ok) return json({ error: cfg.messages?.tooMany ?? '今天的 AI 演示额度已用完，明天再来试试吧', code: 'quota' }, 429);
-    quota = data;
-  }
+  const q = await takeQuota();
+  if (!q.ok) return q.res!;
+  const quota = q.quota;
 
   const messages: any[] = [{ role: 'system', content: cfg.systemPrompt(body) }, ...history];
   const enc = new TextEncoder();
