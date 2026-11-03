@@ -29,6 +29,8 @@ import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import LanguageIcon from '@mui/icons-material/Language';
 import { PLATFORMS } from './constants';
 import { Sparkle } from './ai/Sparkle';
+import ExtensionOutlinedIcon from '@mui/icons-material/ExtensionOutlined';
+import { useExtension } from './collect/extension';
 
 // AI 面板（assistant-ui、Markdown、图表）首次打开时才加载
 const AssistantPanel = lazy(() => import('./ai/AssistantPanel'));
@@ -83,6 +85,7 @@ const AppsMenu = () => {
       <Menu anchorEl={el} open={!!el} onClose={() => setEl(null)}>
         <MenuItem component="a" href={`${base}/`}><ListItemIcon><HomeOutlinedIcon /></ListItemIcon>作者博客</MenuItem>
         <MenuItem component="a" href={`${base}/wavely-crossborder/`}><ListItemIcon><LanguageIcon /></ListItemIcon>演示入口</MenuItem>
+        <MenuItem component={RouterLink} to="/import_drafts" onClick={() => setEl(null)}><ListItemIcon><ExtensionOutlinedIcon /></ListItemIcon>1688 采集插件</MenuItem>
       </Menu>
     </>
   );
@@ -109,6 +112,21 @@ const UserAvatar = () => {
   );
 };
 
+// 顶栏入口：未安装采集插件时提示安装，装好后自动隐藏
+const CollectorButton = () => {
+  const { status } = useExtension();
+  if (status !== 'missing') return null;
+  return (
+    <Tooltip title="在 1688 勾选商品，一键采集到 ERP">
+      <Box component={RouterLink} to="/import_drafts" sx={(t) => ({ display: { xs: 'none', md: 'inline-flex' }, alignItems: 'center', gap: 0.75, height: 36, px: 1.5, mr: 0.5,
+        borderRadius: 18, textDecoration: 'none', fontSize: 14, fontWeight: 500, color: t.palette.gm.composeText, bgcolor: t.palette.gm.compose,
+        '&:hover': { bgcolor: t.palette.gm.composeHover } })}>
+        <ExtensionOutlinedIcon sx={{ fontSize: 18 }} />安装采集插件
+      </Box>
+    </Tooltip>
+  );
+};
+
 const TopBar = ({ onMenu, onAi, aiOpen }) => {
   const small = useMediaQuery((t) => t.breakpoints.down('sm'));
   return (
@@ -121,6 +139,7 @@ const TopBar = ({ onMenu, onAi, aiOpen }) => {
       <SearchBar />
       <Box sx={{ flex: { md: 1 } }} />
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+        <CollectorButton />
         <Tooltip title="AI 运营助手">
           <IconButton onClick={onAi} aria-label="AI 运营助手" aria-pressed={aiOpen}
             sx={(t) => ({ bgcolor: aiOpen ? t.palette.gm.navActive : 'transparent' })}>
