@@ -6,6 +6,7 @@ import { Box, Button, Chip, Stack, Typography, Link, useMediaQuery } from '@mui/
 import { AgList, col, render } from '../grid';
 import { InstallCard } from './InstallCard';
 import { ImportDialog, Img } from './ImportDialog';
+import { CollectBulkActions } from './BulkImport';
 
 export const DRAFT_STATUS = {
   new: { label: '待处理', color: 'warning' },
@@ -69,7 +70,7 @@ export const CollectBox = () => {
             secondaryText={(r) => `${priceRange(r)} · ${r.sku_count} 个规格`} tertiaryText={(r) => DRAFT_STATUS[r.status]?.label}
             rowClick={(id, _res, r) => { if (r.status === 'new') setDraft(r); return false; }} />
         ) : (
-          <AgList columnDefs={cols} rowHeight={64} />
+          <AgList columnDefs={cols} rowHeight={64} bulkActions={<CollectBulkActions />} />
         )}
       </List>
       {draft && <ImportDialog draft={draft} onClose={() => setDraft(null)} />}

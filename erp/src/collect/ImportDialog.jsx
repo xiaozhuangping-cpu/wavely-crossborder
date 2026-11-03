@@ -27,28 +27,57 @@ export const Img = ({ src, size = 40 }) => (
 
 const num = (v) => (v === '' || v == null ? '' : Number(v));
 
+export const CATEGORY_CHOICES = CATEGORIES;
+export const STATUS_OPTIONS = [
+  { id: 'active', label: '直接上架（独立站可见）' },
+  { id: 'draft', label: '存为草稿（稍后手动上架）' },
+];
+
+// 规格行：规格没有单价（阶梯价商品）时成本取起订档价格；旧数据没有阶梯价信息则取最高价，宁可高估成本
+export const fallbackCostOf = (d) => d.priceTiers?.[0]?.price ?? d.priceMax ?? d.priceMin ?? 0;
+export const draftRows = (d, cny, margin) => (d.skus ?? []).map((s) => {
+  const w = s.weight_g || 500;
+  const cost = s.price ?? fallbackCostOf(d);
+  return { key: s.skuId ?? s.specText, on: true, spec: s.specText || '默认', cost, weight: w, image: s.image || '', price: suggestPrice(cost, w, cny, margin) };
+});
+
+// 1688 标题堆砌关键词，批量导入时取前 40 个字作为中文名
+export const defaultName = (d) => (d.title ?? '').replace(/[【\[][^】\]]*[】\]]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 40) || d.title?.slice(0, 40) || '';
+
+export const buildPayload = ({ d, rows, zh, en = '', category, optionName, image, status }) => {
+  const desc = (d.attributes ?? []).slice(0, 12).map((a) => `${a.name}：${a.value}`).join('；');
+  return {
+    status,
+    name: { zh: zh.trim(), ...(en.trim() ? { en: en.trim() } : {}) },
+    category,
+    option_name: { zh: (optionName ?? '').trim() || '规格' },
+    image_url: image || null,
+    description: desc ? { zh: desc } : {},
+    skus: rows.filter((r) => r.on).slice(0, 100).map((r) => ({ option_value: { zh: r.spec.slice(0, 80) }, cost_cny: Number(r.cost) || 0, price_usd: Number(r.price), weight_g: Math.round(Number(r.weight) || 500), image_url: r.image || null })),
+  };
+};
+
+export const useCnyRate = () => {
+  const { data: rates = [] } = useGetList('exchange_rates', { pagination: { page: 1, perPage: 20 }, sort: { field: 'currency', order: 'ASC' } });
+  return Number(rates.find((r) => r.currency === 'CNY')?.rate_to_usd ?? 0.138);
+};
+
 export function ImportDialog({ draft, onClose }) {
   const notify = useNotify();
   const refresh = useRefresh();
   const navigate = useNavigate();
-  const { data: rates = [] } = useGetList('exchange_rates', { pagination: { page: 1, perPage: 20 }, sort: { field: 'currency', order: 'ASC' } });
-  const cny = Number(rates.find((r) => r.currency === 'CNY')?.rate_to_usd ?? 0.138);
+  const cny = useCnyRate();
 
   const d = draft.data ?? {};
   const [margin, setMargin] = useState(30);
   const [f, setF] = useState(() => ({
-    zh: d.title?.slice(0, 60) ?? '', en: '', category: '',
+    zh: d.title?.slice(0, 60) ?? '', en: '', category: '', status: 'active',
     optionName: (d.props ?? []).map((p) => p.name).join(' / ') || '规格',
     image: d.images?.[0] ?? '',
   }));
-  // 规格没有单价（阶梯价商品）时，成本取起订档价格；旧数据没有阶梯价信息则取最高价，宁可高估成本
   const tiers = d.priceTiers ?? [];
-  const fallbackCost = tiers[0]?.price ?? d.priceMax ?? d.priceMin ?? 0;
-  const [rows, setRows] = useState(() => (d.skus ?? []).map((s) => {
-    const w = s.weight_g || 500;
-    const cost = s.price ?? fallbackCost;
-    return { key: s.skuId ?? s.specText, on: true, spec: s.specText || '默认', cost, weight: w, image: s.image || '', price: suggestPrice(cost, w, cny, 0.3) };
-  }));
+  const fallbackCost = fallbackCostOf(d);
+  const [rows, setRows] = useState(() => draftRows(d, cny, 0.3));
   const usedFallback = (d.skus ?? []).some((s) => s.price == null || s.priceFromTier);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -70,21 +99,13 @@ export function ImportDialog({ draft, onClose }) {
   const submit = async () => {
     if (invalid) { setErr(invalid); return; }
     setBusy(true); setErr('');
-    const desc = (d.attributes ?? []).slice(0, 12).map((a) => `${a.name}：${a.value}`).join('；');
     const { data: id, error } = await supabase.rpc('import_draft', {
       p_draft: draft.id,
-      p: {
-        name: { zh: f.zh.trim(), ...(f.en.trim() ? { en: f.en.trim() } : {}) },
-        category: f.category,
-        option_name: { zh: f.optionName.trim() || '规格' },
-        image_url: f.image || null,
-        description: desc ? { zh: desc } : {},
-        skus: picked.map((r) => ({ option_value: { zh: r.spec.slice(0, 80) }, cost_cny: Number(r.cost) || 0, price_usd: Number(r.price), weight_g: Math.round(Number(r.weight) || 500), image_url: r.image || null })),
-      },
+      p: buildPayload({ d, rows, zh: f.zh, en: f.en, category: f.category, optionName: f.optionName, image: f.image, status: f.status }),
     });
     setBusy(false);
     if (error) { setErr(error.message); return; }
-    notify(`已导入为草稿商品，共 ${picked.length} 个 SKU`, { type: 'success' });
+    notify(`已导入${f.status === 'active' ? '并上架' : '为草稿'}，共 ${picked.length} 个 SKU`, { type: 'success' });
     refresh();
     onClose();
     navigate(`/products/${id}`);
@@ -113,6 +134,9 @@ export function ImportDialog({ draft, onClose }) {
             <TextField label="English name（可选）" value={f.en} onChange={(e) => set({ en: e.target.value })} size="small" fullWidth
               helperText="也可以导入后让 ✦ AI 运营助手写多语言 Listing" />
             <TextField label="规格名" value={f.optionName} onChange={(e) => set({ optionName: e.target.value })} size="small" sx={{ minWidth: 180 }} />
+            <TextField select label="导入后" value={f.status} onChange={(e) => set({ status: e.target.value })} size="small" sx={{ minWidth: 210 }}>
+              {STATUS_OPTIONS.map((o) => <MenuItem key={o.id} value={o.id}>{o.label}</MenuItem>)}
+            </TextField>
           </Stack>
 
           {d.images?.length > 0 && (
@@ -191,7 +215,7 @@ export function ImportDialog({ draft, onClose }) {
           {picked.length > 0 && (
             <Typography sx={{ fontSize: 13, color: 'text.secondary' }}>
               售价区间 {fmtMoney(Math.min(...picked.map((r) => Number(r.price) || Infinity)))} – {fmtMoney(Math.max(...picked.map((r) => Number(r.price) || 0)))}
-              · 导入后为<b>草稿</b>状态，不会出现在独立站，确认无误后在商品页改为「在售」
+              {f.status === 'active' ? ' · 导入后立即在独立站上架' : ' · 导入后为草稿，不会出现在独立站，确认无误后在商品页改为「在售」'}
             </Typography>
           )}
           {err && <Alert severity="error">{err}</Alert>}
