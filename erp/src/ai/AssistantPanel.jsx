@@ -8,7 +8,9 @@ import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import StopIcon from '@mui/icons-material/Stop';
 import { Sparkle } from './Sparkle';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
-import { deepseekAdapter } from './adapter';
+import TuneIcon from '@mui/icons-material/Tune';
+import { deepseekAdapter, fetchModels } from './adapter';
+import { LlmSettingsDialog, useLlmConfig, llmLabel, isOwnKey } from './llmConfig';
 import { TOOL_UIS, ToolFallback } from './toolUIs';
 
 const SUGGESTIONS = [
@@ -89,7 +91,9 @@ const Welcome = () => (
   </AuiIf>
 );
 
-const Composer = () => (
+const Composer = () => {
+  const cfg = useLlmConfig();
+  return (
   <Box sx={{ px: 2, pb: 1.5, pt: 1 }}>
     <ComposerPrimitive.Root>
       <Box sx={(t) => ({ display: 'flex', alignItems: 'flex-end', gap: 1, bgcolor: t.palette.gm.search, borderRadius: '24px', pl: 2, pr: 0.75, py: 0.75,
@@ -108,10 +112,11 @@ const Composer = () => (
       </Box>
     </ComposerPrimitive.Root>
     <Typography sx={{ fontSize: 11, color: 'text.secondary', textAlign: 'center', mt: 1 }}>
-      由 DeepSeek 驱动 · AI 可能出错，请核对重要信息 · 每位访客每天 30 次
+      {isOwnKey(cfg) ? `${llmLabel(cfg)} · 使用你自己的 API Key` : '内置 DeepSeek · 每位访客每天 30 次'} · AI 可能出错，请核对重要信息
     </Typography>
   </Box>
-);
+  );
+};
 
 // 对话持久化：刷新后恢复，24 小时过期（演示数据每日重置）
 const STORE_KEY = 'wv.erp.chat';
@@ -141,11 +146,28 @@ export default function AssistantPanelWithRuntime({ onClose }) {
   );
 }
 
+// 顶栏：当前模型，点击打开模型设置
+const ModelButton = () => {
+  const cfg = useLlmConfig();
+  const [open, setOpen] = useState(false);
+  return (<>
+    <Tooltip title="AI 模型设置">
+      <Box component="button" onClick={() => setOpen(true)} sx={(t) => ({ display: 'flex', alignItems: 'center', gap: 0.5, maxWidth: 160, border: `1px solid ${t.palette.gm.border}`,
+        bgcolor: 'transparent', color: 'text.secondary', borderRadius: 4, px: 1, py: 0.25, fontSize: 12, font: 'inherit', cursor: 'pointer', '&:hover': { bgcolor: t.palette.gm.navHover } })}>
+        <TuneIcon sx={{ fontSize: 14 }} />
+        <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{llmLabel(cfg)}</Box>
+      </Box>
+    </Tooltip>
+    <LlmSettingsDialog open={open} onClose={() => setOpen(false)} fetchModels={fetchModels} lang="zh" />
+  </>);
+};
+
 export const AssistantPanel = ({ onClose, onReset }) => (
   <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: 'background.paper', minWidth: 0 }}>
     <Stack direction="row" sx={{ alignItems: 'center', px: 2, height: 56, flexShrink: 0, gap: 1 }}>
       <Sparkle />
-      <Typography sx={{ fontSize: 16, fontWeight: 500, flex: 1 }}>Wavely AI 运营助手</Typography>
+      <Typography sx={{ fontSize: 16, fontWeight: 500, flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Wavely AI 运营助手</Typography>
+      <ModelButton />
       <Tooltip title="新对话"><IconButton size="small" onClick={onReset}><RestartAltIcon fontSize="small" /></IconButton></Tooltip>
       <Tooltip title="关闭"><IconButton size="small" onClick={onClose}><CloseIcon fontSize="small" /></IconButton></Tooltip>
     </Stack>

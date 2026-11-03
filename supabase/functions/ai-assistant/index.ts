@@ -104,5 +104,5 @@ async function runTool(db: SupabaseClient, name: string, a: Record<string, any>)
 Deno.serve((req) => handleChat(req, {
   systemPrompt, tools, runTool,
   isProposal: (r) => !!r?.pending_confirmation,
-  messages: { tooMany: '你今天的 AI 演示额度已用完，明天再来试试吧' },
+  messages: { tooMany: '你今天的内置 AI 额度（30 次）已用完。可以点右上角 ⚙ 填自己的 API Key 继续使用，或明天再来' },
 }));

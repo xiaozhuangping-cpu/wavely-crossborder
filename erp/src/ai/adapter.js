@@ -1,4 +1,20 @@
 import { supabase, SUPABASE_URL, SUPABASE_KEY } from '../supabase';
+import { llmPayload } from './llmConfig';
+
+const FN_URL = `${SUPABASE_URL}/functions/v1/ai-assistant`;
+const authHeaders = async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  return { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: `Bearer ${session?.access_token ?? ''}` };
+};
+
+/** 经边缘函数拉取自定义服务的模型列表（供设置对话框使用） */
+export async function fetchModels(llm) {
+  const res = await fetch(FN_URL, { method: 'POST', headers: await authHeaders(), body: JSON.stringify({ action: 'models', llm }) })
+    .catch(() => { throw new Error('网络异常，请稍后再试'); });
+  const d = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(d.error ?? `HTTP ${res.status}`);
+  return d.models ?? [];
+}
 
 // 把 assistant-ui 的消息压成纯文本历史：工具结果以摘要形式带上，方便模型理解追问
 const toText = (m) =>
@@ -28,17 +44,16 @@ export const deepseekAdapter = {
       .map((m) => ({ role: m.role, content: toText(m) }))
       .filter((m) => m.content.trim());
 
-    const { data: { session } } = await supabase.auth.getSession();
     const content = [];
     const snapshot = () => ({ content: content.map((p) => ({ ...p })) });
 
     let res;
     try {
-      res = await fetch(`${SUPABASE_URL}/functions/v1/ai-assistant`, {
+      res = await fetch(FN_URL, {
         method: 'POST',
         signal: abortSignal,
-        headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: `Bearer ${session?.access_token ?? ''}` },
-        body: JSON.stringify({ messages: history }),
+        headers: await authHeaders(),
+        body: JSON.stringify({ messages: history, llm: llmPayload() }),
       });
     } catch (e) {
       if (e.name === 'AbortError') throw e;

@@ -13,6 +13,24 @@ import { useStore, supabase, SUPABASE_URL, SUPABASE_KEY } from '../store';
 import { productTitle } from '../i18n';
 import { ProductArt, AddButton, PriceFrom } from './ui';
 import { Timeline } from '../pages/Track';
+import TuneIcon from '@mui/icons-material/Tune';
+import { LlmSettingsDialog, useLlmConfig, llmLabel, llmPayload } from './llmConfig';
+
+const FN_URL = `${SUPABASE_URL}/functions/v1/shop-assistant`;
+const authHeaders = async () => {
+  let { data: { session } } = await supabase.auth.getSession();
+  if (!session) ({ data: { session } } = await supabase.auth.signInAnonymously());   // 访客首次使用时匿名登录
+  return { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: `Bearer ${session?.access_token ?? ''}` };
+};
+
+// 经边缘函数拉取自定义服务的模型列表（供设置对话框使用）
+const fetchModels = async (llm) => {
+  const res = await fetch(FN_URL, { method: 'POST', headers: await authHeaders(), body: JSON.stringify({ action: 'models', llm }) })
+    .catch(() => { throw new Error('Network error, please try again.'); });
+  const d = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(d.error ?? `HTTP ${res.status}`);
+  return d.models ?? [];
+};
 
 // ---------- 运行时：流式读取 shop-assistant 的 SSE ----------
 const toText = (m) => (m.content ?? []).map((p) =>
@@ -20,16 +38,14 @@ const toText = (m) => (m.content ?? []).map((p) =>
 
 const makeAdapter = (getCtx) => ({
   async *run({ messages, abortSignal }) {
-    let { data: { session } } = await supabase.auth.getSession();
-    if (!session) ({ data: { session } } = await supabase.auth.signInAnonymously());   // 访客首次提问时匿名登录
     const { lang, currency } = getCtx();
     const content = [];
     const snap = () => ({ content: content.map((p) => ({ ...p })) });
 
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/shop-assistant`, {
+    const res = await fetch(FN_URL, {
       method: 'POST', signal: abortSignal,
-      headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: `Bearer ${session?.access_token ?? ''}` },
-      body: JSON.stringify({ lang, currency, messages: messages.map((m) => ({ role: m.role, content: toText(m) })).filter((m) => m.content.trim()) }),
+      headers: await authHeaders(),
+      body: JSON.stringify({ lang, currency, llm: llmPayload(), messages: messages.map((m) => ({ role: m.role, content: toText(m) })).filter((m) => m.content.trim()) }),
     }).catch((e) => { if (e.name === 'AbortError') throw e; return null; });
 
     if (!res || !res.ok || !res.headers.get('content-type')?.includes('text/event-stream')) {
@@ -130,7 +146,9 @@ const AssistantMessage = () => (
 );
 
 const ChatPanel = ({ onClose, onReset }) => {
-  const { tr } = useStore();
+  const { tr, lang } = useStore();
+  const cfg = useLlmConfig();
+  const [settings, setSettings] = useState(false);
   return (
     <Stack sx={{ height: '100%' }}>
       <Stack direction="row" sx={{ alignItems: 'center', gap: 1.25, px: 2, py: 1.5, bgcolor: 'primary.main', color: '#fff' }}>
@@ -139,6 +157,7 @@ const ChatPanel = ({ onClose, onReset }) => {
           <Typography sx={{ fontWeight: 700, lineHeight: 1.2 }}>{tr.chatTitle}</Typography>
           <Typography sx={{ fontSize: 12, opacity: 0.85 }}>● Online · AI</Typography>
         </Box>
+        <Tooltip title={lang === 'zh' ? 'AI 模型设置' : 'AI model settings'}><IconButton onClick={() => setSettings(true)} sx={{ color: '#fff' }} aria-label="model settings"><TuneIcon /></IconButton></Tooltip>
         <Tooltip title="New chat"><IconButton onClick={onReset} sx={{ color: '#fff' }} aria-label="new chat"><RestartAltIcon /></IconButton></Tooltip>
         <IconButton onClick={onClose} sx={{ color: '#fff' }} aria-label="close"><CloseIcon /></IconButton>
       </Stack>
@@ -173,9 +192,10 @@ const ChatPanel = ({ onClose, onReset }) => {
               </AuiIf>
             </Box>
           </ComposerPrimitive.Root>
-          <Typography sx={{ fontSize: 11, color: 'text.secondary', textAlign: 'center', mt: 0.75 }}>{tr.chatNote}</Typography>
+          <Typography sx={{ fontSize: 11, color: 'text.secondary', textAlign: 'center', mt: 0.75 }}>{llmLabel(cfg)} · {tr.chatNote}</Typography>
         </Box>
       </ThreadPrimitive.Root>
+      <LlmSettingsDialog open={settings} onClose={() => setSettings(false)} fetchModels={fetchModels} lang={lang} />
     </Stack>
   );
 };
