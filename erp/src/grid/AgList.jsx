@@ -29,7 +29,8 @@ const LOCALE = {
 };
 const DEFAULT_COL = { resizable: true, suppressHeaderMenuButton: true, cellStyle: { display: 'flex', alignItems: 'center' } };
 const ROW_SELECTION = { mode: 'multiRow', checkboxes: true, headerCheckbox: true, enableClickSelection: false };
-const SELECTION_COL = { width: 48, pinned: 'left' };
+// 勾选列不继承 defaultColDef 的样式，单独设置垂直居中
+const SELECTION_COL = { width: 48, pinned: 'left', cellStyle: { display: 'flex', alignItems: 'center' } };
 const TEXT_FILTER_PARAMS = { filterOptions: ['contains'], maxNumConditions: 1, debounceMs: 400, trimInput: true };
 const getRowId = (p) => String(p.data.id);
 // 与键顺序无关的比较
