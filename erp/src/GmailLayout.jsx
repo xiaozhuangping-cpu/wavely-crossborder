@@ -229,6 +229,8 @@ export const GmailLayout = ({ children }) => {
   const [aiOpen, setAiOpen] = useState(false);
   const [aiLoaded, setAiLoaded] = useState(false);
   const { pathname } = useLocation();
+  // 订单收件箱与各列表页（/资源名）贴边铺满面板；看板、利润计算器、编辑页保留内边距
+  const flush = pathname.startsWith('/orders') || (!isMobile && /^\/[a-z_]+\/?$/.test(pathname) && pathname !== '/profit');
   const panel = aiLoaded && (
     <Suspense fallback={<Box sx={{ flex: 1, display: 'grid', placeItems: 'center', bgcolor: 'background.paper' }}><Sparkle size={28} /></Box>}>
       <AssistantPanel onClose={() => setAiOpen(false)} />
@@ -250,7 +252,7 @@ export const GmailLayout = ({ children }) => {
         <Box component="main" id="main-content"
           sx={{ flex: 1, minWidth: 0, overflow: 'auto', bgcolor: 'background.paper',
                 borderRadius: { md: 4 }, mr: { md: 2 }, mb: { md: 2 } }}>
-          {pathname.startsWith('/orders') ? children : <Box sx={{ px: { xs: 1.5, md: 3 }, pb: { xs: 10, md: 2 } }}>{children}</Box>}
+          {flush ? children : <Box sx={{ px: { xs: 1.5, md: 3 }, pb: { xs: 10, md: 2 } }}>{children}</Box>}
         </Box>
         {/* AI 面板：桌面端在右侧常驻（关闭时只隐藏，保留对话），手机端为右侧抽屉 */}
         {!isMobile && (

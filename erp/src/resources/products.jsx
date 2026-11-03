@@ -2,6 +2,7 @@ import {
   List, Datagrid, TextField, NumberField, FunctionField, SimpleList, SearchInput, SelectInput,
   Edit, Create, TabbedForm, TextInput, NumberInput, required, useRecordContext, useGetList,
   ReferenceManyField, CreateButton, TopToolbar, ListButton,
+  ExportButton,
 } from 'react-admin';
 import { Chip, useMediaQuery, Box, Typography, Stack, Button, Tooltip, IconButton, Alert } from '@mui/material';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
@@ -69,8 +70,8 @@ const priceRange = (skus = []) => {
 
 const filters = [
   <SearchInput key="q" source="sku@ilike" placeholder="搜索 SPU 编码" alwaysOn />,
-  <SelectInput key="c" source="category" choices={CATEGORIES} alwaysOn label={false} emptyText="全部类目" />,
-  <SelectInput key="s" source="status" choices={STATUS} label={false} emptyText="全部状态" />,
+  <SelectInput key="c" source="category" choices={CATEGORIES} alwaysOn label={false} emptyText="全部类目" slotProps={{ select: { displayEmpty: true } }} />,
+  <SelectInput key="s" source="status" choices={STATUS} label={false} emptyText="全部状态" slotProps={{ select: { displayEmpty: true } }} />,
 ];
 
 const LIST_META = { columns: ['*', 'skus(id,price_usd,status)'] };
@@ -78,13 +79,13 @@ const LIST_META = { columns: ['*', 'skus(id,price_usd,status)'] };
 export const ProductList = () => {
   const isSmall = useMediaQuery((t) => t.breakpoints.down('md'));
   return (
-    <List filters={isSmall ? filters : undefined} pagination={isSmall ? undefined : false} perPage={25}
+    <List filters={isSmall ? filters : undefined} pagination={isSmall ? undefined : false} actions={isSmall ? undefined : false} perPage={25}
       sort={{ field: 'sku', order: 'ASC' }} queryOptions={{ meta: LIST_META }} title="商品">
       {isSmall ? (
         <SimpleList leftAvatar={(r) => <Thumb src={r.image_url} size={40} />} primaryText={(r) => r.name?.zh}
           secondaryText={(r) => `${r.sku} · ${r.skus?.length ?? 0} 个 SKU`} tertiaryText={(r) => priceRange(r.skus)} linkType="edit" />
       ) : (
-        <AgList columnDefs={PRODUCT_COLS} rowClick={(id) => `/products/${id}`} />
+        <AgList columnDefs={PRODUCT_COLS} rowClick={(id) => `/products/${id}`} actions={<><CreateButton label="新建商品" /><ExportButton /></>} />
       )}
     </List>
   );

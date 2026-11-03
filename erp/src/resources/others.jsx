@@ -2,6 +2,7 @@ import {
   List, Datagrid, TextField, NumberField, DateField, FunctionField, SimpleList, SearchInput, SelectInput,
   BooleanInput, Edit, Create, SimpleForm, TextInput, NumberInput, required, EmailField, ReferenceField,
   TopToolbar, useRefresh, useNotify, useListContext, Button as RaButton, useDataProvider,
+  CreateButton, ExportButton,
 } from 'react-admin';
 import { Chip, useMediaQuery, LinearProgress, Box, Typography } from '@mui/material';
 import SyncIcon from '@mui/icons-material/Sync';
@@ -26,14 +27,14 @@ const StockBar = ({ r }) => {
 
 const inventoryFilters = [
   <SearchInput key="q" source="sku@ilike" placeholder="搜索 SKU" alwaysOn />,
-  <SelectInput key="k" source="warehouse_kind" choices={toChoices(WAREHOUSE_KIND)} alwaysOn label={false} emptyText="全部仓库" />,
+  <SelectInput key="k" source="warehouse_kind" choices={toChoices(WAREHOUSE_KIND)} alwaysOn label={false} emptyText="全部仓库" slotProps={{ select: { displayEmpty: true } }} />,
   <BooleanInput key="l" source="low_stock" label="只看低库存" alwaysOn />,
 ];
 
 export const InventoryList = () => {
   const isSmall = useSmall();
   return (
-  <List resource="v_inventory" filters={isSmall ? inventoryFilters : undefined} pagination={isSmall ? undefined : false} perPage={50} sort={{ field: 'qty', order: 'ASC' }} title="库存" exporter={false}>
+  <List resource="v_inventory" filters={isSmall ? inventoryFilters : undefined} pagination={isSmall ? undefined : false} actions={isSmall ? undefined : false} perPage={50} sort={{ field: 'qty', order: 'ASC' }} title="库存" exporter={false}>
     {isSmall ? (
       <SimpleList primaryText={(r) => `${r.product_name} · ${r.option_label ?? ''}`} secondaryText={(r) => `${r.sku} · ${r.warehouse_name}`}
                   tertiaryText={(r) => `${r.qty} / ${r.safety_qty}`} linkType={(r) => `/inventory/${r.id}`} />
@@ -73,11 +74,11 @@ const ShopForm = () => (
 export const ShopList = () => {
   const isSmall = useSmall();
   return (
-  <List sort={{ field: 'id', order: 'ASC' }} pagination={false}>
+  <List sort={{ field: 'id', order: 'ASC' }} pagination={false} actions={isSmall ? undefined : false}>
     {isSmall ? (
       <SimpleList primaryText={(r) => r.name} secondaryText={(r) => `${PLATFORMS[r.platform]?.label} · ${r.currency}`} linkType="edit" />
     ) : (
-      <AgList pagination={false} rowClick={(id) => `/shops/${id}`} columnDefs={[
+      <AgList pagination={false} actions={<><CreateButton label="新建店铺" /><ExportButton /></>} rowClick={(id) => `/shops/${id}`} columnDefs={[
         render('平台', ({ r }) => <Chip size="small" label={PLATFORMS[r.platform]?.label} sx={{ bgcolor: PLATFORMS[r.platform]?.color, color: '#fff' }} />, { field: 'platform', sortable: true, width: 150, filterSpec: { type: 'select', source: 'platform', choices: toChoices(PLATFORMS), placeholder: '全部平台' } }),
         col('name', '店铺名', { flex: 1, minWidth: 180, filterSpec: { type: 'text', source: 'name@ilike', placeholder: '店铺名' } }),
         render('站点', ({ r }) => COUNTRIES[r.country] ?? r.country, { field: 'country', sortable: true, width: 140 }),
@@ -93,16 +94,16 @@ export const ShopCreate = () => <Create redirect="list"><ShopForm /></Create>;
 // ========== 客户 ==========
 const customerFilters = [
   <SearchInput key="q" source="name@ilike" placeholder="搜索姓名" alwaysOn />,
-  <SelectInput key="c" source="country" choices={toChoices(COUNTRIES)} alwaysOn label={false} emptyText="全部国家" />,
+  <SelectInput key="c" source="country" choices={toChoices(COUNTRIES)} alwaysOn label={false} emptyText="全部国家" slotProps={{ select: { displayEmpty: true } }} />,
 ];
 export const CustomerList = () => {
   const isSmall = useSmall();
   return (
-  <List filters={isSmall ? customerFilters : undefined} pagination={isSmall ? undefined : false} perPage={50} sort={{ field: 'created_at', order: 'DESC' }}>
+  <List filters={isSmall ? customerFilters : undefined} pagination={isSmall ? undefined : false} actions={isSmall ? undefined : false} perPage={50} sort={{ field: 'created_at', order: 'DESC' }}>
     {isSmall ? (
       <SimpleList primaryText={(r) => r.name} secondaryText={(r) => r.email} tertiaryText={(r) => COUNTRIES[r.country] ?? r.country} linkType={false} />
     ) : (
-      <AgList columnDefs={[
+      <AgList actions={<ExportButton />} columnDefs={[
         col('name', '姓名', { flex: 1, minWidth: 160, filterSpec: { type: 'text', source: 'name@ilike', placeholder: '姓名' } }),
         render('邮箱', ({ r }) => <a href={`mailto:${r.email}`} style={{ color: 'inherit' }}>{r.email}</a>, { field: 'email', sortable: true, flex: 1, minWidth: 220, filterSpec: { type: 'text', source: 'email@ilike', placeholder: '邮箱' } }),
         render('国家', ({ r }) => COUNTRIES[r.country] ?? r.country, { field: 'country', sortable: true, width: 150, filterSpec: { type: 'select', source: 'country', choices: toChoices(COUNTRIES), placeholder: '全部国家' } }),
@@ -116,17 +117,17 @@ export const CustomerList = () => {
 // ========== 物流 ==========
 const shipmentFilters = [
   <SearchInput key="q" source="tracking_no@ilike" placeholder="搜索运单号" alwaysOn />,
-  <SelectInput key="s" source="status" choices={toChoices(SHIP_STATUS)} alwaysOn label={false} emptyText="全部状态" />,
+  <SelectInput key="s" source="status" choices={toChoices(SHIP_STATUS)} alwaysOn label={false} emptyText="全部状态" slotProps={{ select: { displayEmpty: true } }} />,
 ];
 export const ShipmentList = () => {
   const isSmall = useSmall();
   return (
-  <List filters={isSmall ? shipmentFilters : undefined} pagination={isSmall ? undefined : false} perPage={50} sort={{ field: 'updated_at', order: 'DESC' }} queryOptions={{ meta: { columns: ['*', 'orders(order_no)'] } }}>
+  <List filters={isSmall ? shipmentFilters : undefined} pagination={isSmall ? undefined : false} actions={isSmall ? undefined : false} perPage={50} sort={{ field: 'updated_at', order: 'DESC' }} queryOptions={{ meta: { columns: ['*', 'orders(order_no)'] } }}>
     {isSmall ? (
       <SimpleList primaryText={(r) => r.tracking_no} secondaryText={(r) => `${r.carrier} · ${SHIP_STATUS[r.status]}`}
                   linkType={(r) => `/orders/${r.order_id}/show`} />
     ) : (
-      <AgList rowClick={(id, r) => `/orders/${r.order_id}/show`} columnDefs={[
+      <AgList actions={<ExportButton />} rowClick={(id, r) => `/orders/${r.order_id}/show`} columnDefs={[
         col('tracking_no', '运单号', { width: 170, cellStyle: mono, filterSpec: { type: 'text', source: 'tracking_no@ilike', placeholder: '运单号' } }),
         col('carrier', '承运商', { width: 140, filterSpec: { type: 'text', source: 'carrier@ilike', placeholder: '承运商' } }),
         render('订单', ({ r }) => r.orders?.order_no, { width: 170, cellStyle: mono }),
@@ -163,8 +164,8 @@ const RefreshRates = () => {
 };
 
 export const RateList = () => (
-  <List pagination={false} sort={{ field: 'currency', order: 'ASC' }} actions={<TopToolbar><RefreshRates /></TopToolbar>}>
-    <AgList pagination={false} rowClick={(id) => `/exchange_rates/${id}`} columnDefs={[
+  <List pagination={false} sort={{ field: 'currency', order: 'ASC' }} actions={false}>
+    <AgList pagination={false} actions={<RefreshRates />} rowClick={(id) => `/exchange_rates/${id}`} columnDefs={[
       col('currency', '币种', { width: 110 }),
       render('1 单位 = ? USD', ({ r }) => Number(r.rate_to_usd).toFixed(6), { field: 'rate_to_usd', sortable: true, width: 160, type: 'rightAligned' }),
       render('1 USD =', ({ r }) => (1 / r.rate_to_usd).toFixed(r.currency === 'JPY' ? 1 : 4) + ' ' + r.currency, { width: 160, type: 'rightAligned' }),

@@ -62,7 +62,7 @@ const build = (base, mode) => {
         '& .MuiSelect-select': { paddingTop: '8px !important', paddingBottom: '8px !important' },
         '& .RaFilterFormInput-body': { alignItems: 'center' },
       } } },
-      RaList: { styleOverrides: { root: { '& .RaList-main': { minWidth: 0 }, '& .RaList-content': { border: 'none', borderRadius: 0, background: 'transparent' } } } },
+      RaList: { styleOverrides: { root: { '& .RaList-main': { minWidth: 0 }, '& .RaList-noActions': { marginTop: 0 }, '& .RaList-content': { border: 'none', borderRadius: 0, background: 'transparent' } } } },
       RaShow: { styleOverrides: { root: { '& .RaShow-card': { border: 'none', background: 'transparent' } } } },
       RaEdit: { styleOverrides: { root: { '& .RaEdit-card': { border: 'none', background: 'transparent' } } } },
       RaCreate: { styleOverrides: { root: { '& .RaCreate-card': { border: 'none', background: 'transparent' } } } },

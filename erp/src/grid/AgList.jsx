@@ -82,9 +82,9 @@ const Pager = () => {
   );
 };
 
-export default function AgList({ columnDefs, rowClick, bulkActions, rowHeight = 56, pagination = true, height }) {
+export default function AgList({ columnDefs, rowClick, bulkActions, actions, rowHeight = 56, pagination = true, height }) {
   // 有分页的列表固定高度、表格内滚动；小表格（无分页）自动高度
-  const fixedHeight = height ?? (pagination ? 'max(360px, calc(100dvh - 200px))' : null);
+  const fixedHeight = height ?? (pagination ? 'max(360px, calc(100dvh - 130px))' : null);
   const { data, isPending, sort, setSort, filterValues = {}, setFilters, displayedFilters, selectedIds = [], onSelect, onUnselectItems, total } = useListContext();
   const navigate = useNavigate();
   const gridRef = useRef(null);
@@ -181,21 +181,23 @@ export default function AgList({ columnDefs, rowClick, bulkActions, rowHeight = 
 
   return (
     <Box>
-      {pagination && (
-        <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'flex-end', minHeight: 40, px: 0.5 }}>
-          <Pager />
+      {/* Gmail 式工具栏：左边是操作（勾选后换成批量操作），右边是分页；同一行，不占额外空间 */}
+      {(pagination || actions || bulkActions) && (
+        <Stack direction="row" sx={{ alignItems: 'center', gap: 1, minHeight: 48, px: { xs: 1, md: 1.5 }, position: 'sticky', top: 0, zIndex: 2, bgcolor: 'background.paper' }}>
+          {bulkActions && selectedIds.length > 0 ? (
+            <Stack direction="row" sx={{ alignItems: 'center', gap: 0.5, '& .MuiButton-root': { fontSize: 13 } }}>
+              <Tooltip title="取消选择"><IconButton size="small" onClick={onUnselectItems}><CloseIcon fontSize="small" /></IconButton></Tooltip>
+              <Typography sx={{ fontSize: 13, fontWeight: 600, mr: 1, whiteSpace: 'nowrap' }}>已选 {selectedIds.length} 项</Typography>
+              {bulkActions}
+            </Stack>
+          ) : (
+            <Stack direction="row" sx={{ alignItems: 'center', gap: 0.5, '& .MuiButton-root': { fontSize: 13 } }}>{actions}</Stack>
+          )}
+          <Box sx={{ flex: 1 }} />
+          {pagination && <Pager />}
         </Stack>
       )}
       <Box sx={{ position: 'relative', ...(fixedHeight ? { height: fixedHeight } : {}) }}>
-        {/* 批量操作栏覆盖在表头上（左侧全选框仍可见），避免表格跳动 */}
-        {bulkActions && selectedIds.length > 0 && (
-          <Stack direction="row" sx={{ position: 'absolute', zIndex: 3, top: 0, left: 48, right: 0, height: 44, alignItems: 'center', gap: 1, px: 1,
-            bgcolor: gm.navActive, color: gm.navActiveText, '& .MuiButton-root': { color: 'inherit' } }}>
-            <Tooltip title="取消选择"><IconButton size="small" onClick={onUnselectItems} sx={{ color: 'inherit' }}><CloseIcon fontSize="small" /></IconButton></Tooltip>
-            <Typography sx={{ fontSize: 14, fontWeight: 600, mr: 'auto' }}>已选 {selectedIds.length} 项</Typography>
-            {bulkActions}
-          </Stack>
-        )}
         <AgGridReact
           ref={gridRef}
           theme={theme}

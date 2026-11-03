@@ -5,6 +5,7 @@ import {
   Edit, Create, SimpleForm, TextInput, NumberInput, ReferenceInput, AutocompleteInput, required, regex,
   useListContext, useDataProvider, useNotify, useRefresh, useRecordContext, useGetList, TopToolbar, ListButton,
   Button as RaButton,
+  CreateButton, ExportButton,
 } from 'react-admin';
 import { useFormContext } from 'react-hook-form';
 // 新建 SKU 后在各仓自动建 0 库存
@@ -146,20 +147,20 @@ const skuFilters = [
   <SearchInput key="q" source="sku@ilike" placeholder="搜索 SKU 编码" alwaysOn />,
   <TextInput key="b" source="barcode@ilike" label="条码" />,
   <TextInput key="n" source="product_name@ilike" label="商品名" />,
-  <SelectInput key="c" source="category" choices={CATEGORIES} alwaysOn label={false} emptyText="全部类目" />,
-  <SelectInput key="s" source="status" choices={SKU_STATUS} label={false} emptyText="全部状态" />,
+  <SelectInput key="c" source="category" choices={CATEGORIES} alwaysOn label={false} emptyText="全部类目" slotProps={{ select: { displayEmpty: true } }} />,
+  <SelectInput key="s" source="status" choices={SKU_STATUS} label={false} emptyText="全部状态" slotProps={{ select: { displayEmpty: true } }} />,
   <BooleanInput key="l" source="low_stock" label="只看低库存" />,
 ];
 
 export const SkuList = () => {
   const isSmall = useMediaQuery((t) => t.breakpoints.down('md'));
   return (
-    <List resource="v_skus" filters={isSmall ? skuFilters : undefined} pagination={isSmall ? undefined : false} sort={{ field: 'sku', order: 'ASC' }} perPage={50} title="SKU 管理">
+    <List resource="v_skus" filters={isSmall ? skuFilters : undefined} pagination={isSmall ? undefined : false} actions={isSmall ? undefined : false} sort={{ field: 'sku', order: 'ASC' }} perPage={50} title="SKU 管理">
       {isSmall ? (
         <SimpleList leftAvatar={(r) => <Thumb src={r.image_url} size={40} />} primaryText={(r) => `${r.product_name} · ${r.option_label ?? ''}`}
           secondaryText={(r) => `${r.sku} · 库存 ${r.stock}`} tertiaryText={(r) => fmtMoney(r.price_usd)} linkType={(r) => `/skus/${r.id}`} />
       ) : (
-        <AgList columnDefs={SKU_GRID_COLS.filter((c) => c.headerName !== '规格值')} rowClick={(id) => `/skus/${id}`} bulkActions={<BulkActions />} />
+        <AgList columnDefs={SKU_GRID_COLS.filter((c) => c.headerName !== '规格值')} rowClick={(id) => `/skus/${id}`} bulkActions={<BulkActions />} actions={<><CreateButton resource="skus" label="新建 SKU" /><ExportButton /></>} />
       )}
     </List>
   );
