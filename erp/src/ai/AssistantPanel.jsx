@@ -40,6 +40,14 @@ const UserMessage = () => (
   </MessagePrimitive.Root>
 );
 
+// 还没出字，或刚执行完工具、在等下一轮时显示等待提示
+const waiting = (s) => {
+  if (s.message.status?.type !== 'running') return false;
+  const parts = s.message.parts ?? s.message.content ?? [];
+  const last = parts[parts.length - 1];
+  return !last || last.type === 'tool-call' || (last.type === 'text' && !last.text);
+};
+
 const AssistantMessage = () => (
   <MessagePrimitive.Root>
     <Box sx={{ display: 'flex', gap: 1.25, my: 1.5 }}>
@@ -50,10 +58,10 @@ const AssistantMessage = () => (
         <Box sx={{ pt: 0.5, flexShrink: 0 }}><Sparkle /></Box>
       </AuiIf>
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        <AuiIf condition={(s) => s.message.status?.type === 'running'}>
+        <MessagePrimitive.Parts components={{ Text: MarkdownText, tools: { by_name: TOOL_UIS, Fallback: ToolFallback } }} />
+        <AuiIf condition={waiting}>
           <Typography sx={{ fontSize: 14, color: 'text.secondary', pt: 0.25 }}>正在查询数据并思考…</Typography>
         </AuiIf>
-        <MessagePrimitive.Parts components={{ Text: MarkdownText, tools: { by_name: TOOL_UIS, Fallback: ToolFallback } }} />
       </Box>
     </Box>
   </MessagePrimitive.Root>

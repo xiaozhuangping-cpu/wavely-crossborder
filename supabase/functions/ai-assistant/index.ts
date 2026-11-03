@@ -146,46 +146,78 @@ Deno.serve(async (req) => {
   }
 
   const messages: any[] = [{ role: 'system', content: systemPrompt() }, ...history];
-  const parts: any[] = [];
+  const enc = new TextEncoder();
 
-  try {
-    for (let round = 0; round < MAX_ROUNDS; round++) {
-      const res = await fetch(DEEPSEEK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ model: MODEL, messages, tools, temperature: 0.3, max_tokens: 1500 }),
-      });
-      if (!res.ok) {
-        console.error('deepseek', res.status, (await res.text()).slice(0, 500));
-        return json({ error: `AI 服务暂时不可用（${res.status}）`, parts }, 502);
-      }
-      const msg = (await res.json()).choices?.[0]?.message;
-      if (!msg) return json({ error: 'AI 没有返回内容', parts }, 502);
+  // SSE：{type:'text',delta} | {type:'tool',part} | {type:'done',quota} | {type:'error',message}
+  const stream = new ReadableStream({
+    async start(controller) {
+      const send = (ev: unknown) => controller.enqueue(enc.encode(`data: ${JSON.stringify(ev)}\n\n`));
+      try {
+        for (let round = 0; round < MAX_ROUNDS; round++) {
+          const res = await fetch(DEEPSEEK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+            body: JSON.stringify({ model: MODEL, messages, tools, temperature: 0.3, max_tokens: 1500, stream: true }),
+          });
+          if (!res.ok || !res.body) {
+            console.error('deepseek', res.status, (await res.text()).slice(0, 500));
+            send({ type: 'error', message: `AI 服务暂时不可用（${res.status}）` });
+            break;
+          }
 
-      if (!msg.tool_calls?.length) {
-        return json({ parts, text: msg.content ?? '', quota: { used: quota.used, limit: quota.limit } });
-      }
+          // 解析 DeepSeek 的流：文字实时转发，tool_calls 按 index 累积
+          let text = '';
+          const calls: { id: string; name: string; args: string }[] = [];
+          const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+          let buf = '';
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            buf += value;
+            let nl;
+            while ((nl = buf.indexOf('\n')) >= 0) {
+              const line = buf.slice(0, nl).trim();
+              buf = buf.slice(nl + 1);
+              if (!line.startsWith('data:')) continue;
+              const data = line.slice(5).trim();
+              if (data === '[DONE]') continue;
+              let chunk; try { chunk = JSON.parse(data); } catch { continue; }
+              const delta = chunk.choices?.[0]?.delta ?? {};
+              if (delta.content) { text += delta.content; send({ type: 'text', delta: delta.content }); }
+              for (const tc of delta.tool_calls ?? []) {
+                const c = (calls[tc.index] ??= { id: '', name: '', args: '' });
+                if (tc.id) c.id = tc.id;
+                if (tc.function?.name) c.name += tc.function.name;
+                if (tc.function?.arguments) c.args += tc.function.arguments;
+              }
+            }
+          }
 
-      messages.push({ role: 'assistant', content: msg.content ?? '', tool_calls: msg.tool_calls });
-      for (const call of msg.tool_calls) {
-        let args: Record<string, any> = {};
-        let result: any;
-        try {
-          args = JSON.parse(call.function.arguments || '{}');
-          result = await runTool(db, call.function.name, args);
-        } catch (e) {
-          result = { error: (e as Error).message };
+          const toolCalls = calls.filter(Boolean);
+          if (!toolCalls.length) { send({ type: 'done', quota: { used: quota.used, limit: quota.limit } }); break; }
+
+          messages.push({ role: 'assistant', content: text, tool_calls: toolCalls.map((c) => ({ id: c.id, type: 'function', function: { name: c.name, arguments: c.args } })) });
+          for (const c of toolCalls) {
+            let args: Record<string, any> = {};
+            let result: any;
+            try { args = JSON.parse(c.args || '{}'); result = await runTool(db, c.name, args); }
+            catch (e) { result = { error: (e as Error).message }; }
+            send({ type: 'tool', part: { toolCallId: c.id, toolName: c.name, args, result } });
+            const forModel = result?.pending_confirmation
+              ? { ...result, note: '已在界面展示确认卡片，等待用户点击确认。请提示用户确认，不要声称已经执行。' }
+              : result;
+            messages.push({ role: 'tool', tool_call_id: c.id, content: JSON.stringify(forModel).slice(0, 8000) });
+          }
+          if (round === MAX_ROUNDS - 1) send({ type: 'text', delta: '\n\n这个问题需要的步骤有点多，我先停在这里，可以拆小一点再问我。' });
         }
-        parts.push({ toolCallId: call.id, toolName: call.function.name, args, result });
-        const forModel = result?.pending_confirmation
-          ? { ...result, note: '已在界面展示确认卡片，等待用户点击确认。请提示用户确认，不要声称已经执行。' }
-          : result;
-        messages.push({ role: 'tool', tool_call_id: call.id, content: JSON.stringify(forModel).slice(0, 8000) });
+      } catch (e) {
+        console.error(e);
+        send({ type: 'error', message: 'AI 处理失败，请稍后再试' });
+      } finally {
+        controller.close();
       }
-    }
-    return json({ parts, text: '这个问题需要的步骤有点多，我先停在这里。可以把问题拆小一点再问我。' });
-  } catch (e) {
-    console.error(e);
-    return json({ error: 'AI 处理失败，请稍后再试', parts }, 500);
-  }
+    },
+  });
+
+  return new Response(stream, { headers: { ...cors, 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' } });
 });

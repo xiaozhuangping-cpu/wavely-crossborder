@@ -11,37 +11,73 @@ const toText = (m) =>
     .filter(Boolean)
     .join('\n');
 
+const toolPart = (p) => ({
+  type: 'tool-call',
+  toolCallId: p.toolCallId,
+  toolName: p.toolName,
+  args: p.args ?? {},
+  argsText: JSON.stringify(p.args ?? {}),
+  result: p.result,
+});
+
+// 流式适配器：边收 SSE 边产出内容，文字与工具卡片按到达顺序排列
 export const deepseekAdapter = {
-  async run({ messages, abortSignal }) {
+  async *run({ messages, abortSignal }) {
     const history = messages
       .filter((m) => m.role === 'user' || m.role === 'assistant')
       .map((m) => ({ role: m.role, content: toText(m) }))
       .filter((m) => m.content.trim());
 
     const { data: { session } } = await supabase.auth.getSession();
-    let d;
+    const content = [];
+    const snapshot = () => ({ content: content.map((p) => ({ ...p })) });
+
+    let res;
     try {
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/ai-assistant`, {
+      res = await fetch(`${SUPABASE_URL}/functions/v1/ai-assistant`, {
         method: 'POST',
         signal: abortSignal,
         headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: `Bearer ${session?.access_token ?? ''}` },
         body: JSON.stringify({ messages: history }),
       });
-      d = await res.json().catch(() => ({ error: `服务返回异常（HTTP ${res.status}）` }));
     } catch (e) {
       if (e.name === 'AbortError') throw e;
-      d = { error: '网络异常，请稍后再试' };
+      yield { content: [{ type: 'text', text: '⚠️ 网络异常，请稍后再试' }] };
+      return;
     }
 
-    const content = (d.parts ?? []).map((p) => ({
-      type: 'tool-call',
-      toolCallId: p.toolCallId,
-      toolName: p.toolName,
-      args: p.args ?? {},
-      argsText: JSON.stringify(p.args ?? {}),
-      result: p.result,
-    }));
-    content.push({ type: 'text', text: d.error ? `⚠️ ${d.error}` : d.text || '（没有返回内容）' });
-    return { content, metadata: { custom: { quota: d.quota } } };
+    // 鉴权/配额等错误在开始流式之前以 JSON 返回
+    if (!res.ok || !res.headers.get('content-type')?.includes('text/event-stream')) {
+      const d = await res.json().catch(() => ({}));
+      yield { content: [{ type: 'text', text: `⚠️ ${d.error ?? `服务返回异常（HTTP ${res.status}）`}` }] };
+      return;
+    }
+
+    const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+    let buf = '';
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += value;
+      let changed = false, sep;
+      while ((sep = buf.indexOf('\n\n')) >= 0) {
+        const line = buf.slice(0, sep).trim();
+        buf = buf.slice(sep + 2);
+        if (!line.startsWith('data:')) continue;
+        let ev; try { ev = JSON.parse(line.slice(5)); } catch { continue; }
+        if (ev.type === 'text') {
+          const last = content[content.length - 1];
+          if (last?.type === 'text') last.text += ev.delta; else content.push({ type: 'text', text: ev.delta });
+        } else if (ev.type === 'tool') {
+          content.push(toolPart(ev.part));
+        } else if (ev.type === 'error') {
+          content.push({ type: 'text', text: `\n\n⚠️ ${ev.message}` });
+        }
+        changed = true;
+      }
+      if (changed) yield snapshot();
+    }
+    if (!content.some((p) => p.type === 'text')) content.push({ type: 'text', text: '' });
+    yield snapshot();
   },
 };
