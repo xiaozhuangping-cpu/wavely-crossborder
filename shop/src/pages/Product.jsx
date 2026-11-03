@@ -6,6 +6,7 @@ import CheckIcon from '@mui/icons-material/Check';
 import { useStore, activeSkus, optionLabel } from '../store';
 import { productTitle, productName, productDesc, productBullets } from '../i18n';
 import { ProductArt, AddButton, ProductCard, Perks } from '../components/ui';
+import { ImageZoom, Thumbs } from '../components/ImageZoom';
 
 export const Product = () => {
   const { id } = useParams();
@@ -15,6 +16,7 @@ export const Product = () => {
   const skus = activeSkus(p);
   // ?sku= 预选规格（ERP 里点「在独立站查看」会带上）
   const [skuId, setSkuId] = useState(null);
+  const [hoverSrc, setHoverSrc] = useState(null);   // 悬停缩略图时临时预览
   useEffect(() => {
     if (!skus.length) return;
     const fromUrl = Number(params.get('sku'));
@@ -27,12 +29,29 @@ export const Product = () => {
   const bullets = productBullets(p, lang);
   const related = products.filter((x) => x.category === p.category && x.id !== p.id).slice(0, 4);
   const pick = (k) => { setSkuId(k.id); setParams({ sku: String(k.id) }, { replace: true }); };
+  // 图集：各 SKU 的不同图片（颜色规格有独立图），没有则只有商品主图
+  const mainSrc = sku?.image_url || p.image_url;
+  const gallery = [];
+  for (const k of skus) {
+    const src = k.image_url || p.image_url;
+    if (src && !gallery.some((g) => g.src === src)) gallery.push({ src, sku: k, label: optionLabel(k.option_value, lang) });
+  }
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', px: 2, pt: 3 }}>
       <Button component={RouterLink} to="/" startIcon={<ArrowBackIcon />} color="inherit" sx={{ mb: 2 }}>{tr.back}</Button>
       <Grid container spacing={{ xs: 3, md: 6 }}>
-        <Grid size={{ xs: 12, md: 6 }}><ProductArt p={p} src={sku?.image_url} size="lg" sx={{ borderRadius: 5 }} /></Grid>
+        <Grid size={{ xs: 12, md: 6 }} sx={{ position: 'relative', zIndex: 5 }}>
+          {mainSrc ? (
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column-reverse', md: 'row' }, gap: 1.5, alignItems: 'flex-start' }} onMouseLeave={() => setHoverSrc(null)}>
+              {gallery.length > 1 && (
+                <Thumbs items={gallery} activeSrc={hoverSrc ?? mainSrc} onHover={(it) => setHoverSrc(it.src)}
+                  onPick={(it) => { setHoverSrc(null); if (it.sku) pick(it.sku); }} />
+              )}
+              <Box sx={{ flex: 1, minWidth: 0, width: '100%' }}><ImageZoom src={hoverSrc ?? mainSrc} alt={productName(p, lang)} /></Box>
+            </Box>
+          ) : <ProductArt p={p} size="lg" sx={{ borderRadius: 5 }} />}
+        </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
           <Chip size="small" label={tr.cats[p.category]} sx={{ mb: 2 }} />
           <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 38 }, lineHeight: 1.2 }}>{productTitle(p, lang)}</Typography>

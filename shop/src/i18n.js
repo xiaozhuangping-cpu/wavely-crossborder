@@ -2,6 +2,7 @@ export const LANGS = { en: 'English', de: 'Deutsch', zh: '中文', ja: '日本�
 
 const dict = {
   en: {
+    zoomHint: 'Roll over image to zoom in', tapZoom: 'Tap image to view full size', dblZoom: 'Double-tap to zoom in / out',
     chooseOption: 'Choose option', from: 'From',
     tagline: 'Thoughtful things for home, pets & the outdoors', heroTitle: 'Small upgrades,\nbig everyday joy', heroSub: 'Designed in Shenzhen, shipped worldwide from our local warehouses.',
     shopNow: 'Shop now', all: 'All', freeShip: 'Free worldwide shipping', returns: '30-day returns', fastShip: 'Ships in 24h from local warehouses',
@@ -19,6 +20,7 @@ const dict = {
     cats: { 家居: 'Home', 户外: 'Outdoor', 宠物: 'Pets', 美妆: 'Beauty', 数码配件: 'Tech' }, aiNote: 'This demo store was built with AI assistance.',
   },
   de: {
+    zoomHint: 'Zum Vergrößern mit der Maus über das Bild fahren', tapZoom: 'Zum Vergrößern auf das Bild tippen', dblZoom: 'Doppeltippen zum Vergrößern / Verkleinern',
     chooseOption: 'Option wählen', from: 'Ab',
     tagline: 'Durchdachte Dinge für Zuhause, Haustiere & draußen', heroTitle: 'Kleine Upgrades,\ngroße Alltagsfreude', heroSub: 'Entworfen in Shenzhen, versendet aus lokalen Lagern weltweit.',
     shopNow: 'Jetzt shoppen', all: 'Alle', freeShip: 'Kostenloser Versand weltweit', returns: '30 Tage Rückgaberecht', fastShip: 'Versand in 24 h aus lokalem Lager',
@@ -36,6 +38,7 @@ const dict = {
     cats: { 家居: 'Zuhause', 户外: 'Outdoor', 宠物: 'Haustiere', 美妆: 'Beauty', 数码配件: 'Technik' }, aiNote: 'Dieser Demo-Shop wurde mit KI-Unterstützung erstellt.',
   },
   zh: {
+    zoomHint: '将鼠标悬停在图片上即可放大', tapZoom: '点击查看大图', dblZoom: '双击放大 / 缩小',
     chooseOption: '选择规格', from: '起',
     tagline: '为家居、宠物与户外生活精选好物', heroTitle: '小小升级，\n日常大大满足', heroSub: '深圳设计，海外仓本地发货，送达全球。',
     shopNow: '立即选购', all: '全部', freeShip: '全球包邮', returns: '30 天无忧退货', fastShip: '海外仓 24 小时内发货',
@@ -53,6 +56,7 @@ const dict = {
     cats: { 家居: '家居', 户外: '户外', 宠物: '宠物', 美妆: '美妆', 数码配件: '数码配件' }, aiNote: '本演示站由 AI 辅助生成。',
   },
   ja: {
+    zoomHint: '画像にマウスを合わせると拡大されます', tapZoom: 'タップして拡大表示', dblZoom: 'ダブルタップで拡大 / 縮小',
     chooseOption: 'オプションを選ぶ', from: '〜',
     tagline: '暮らし・ペット・アウトドアのための小さな名品', heroTitle: '小さな工夫で、\n毎日をもっと快適に', heroSub: '深圳でデザイン、現地倉庫から世界へお届け。',
     shopNow: '今すぐ見る', all: 'すべて', freeShip: '全世界送料無料', returns: '30日間返品OK', fastShip: '現地倉庫から24時間以内に発送',
@@ -70,6 +74,7 @@ const dict = {
     cats: { 家居: 'ホーム', 户外: 'アウトドア', 宠物: 'ペット', 美妆: 'ビューティー', 数码配件: 'ガジェット' }, aiNote: 'このデモストアは AI の支援を受けて作成されました。',
   },
   es: {
+    zoomHint: 'Pasa el ratón por la imagen para ampliarla', tapZoom: 'Toca la imagen para verla a tamaño completo', dblZoom: 'Toca dos veces para ampliar / reducir',
     chooseOption: 'Elegir opción', from: 'Desde',
     tagline: 'Cosas bien pensadas para el hogar, mascotas y aire libre', heroTitle: 'Pequeñas mejoras,\ngran alegría diaria', heroSub: 'Diseñado en Shenzhen, enviado desde almacenes locales.',
     shopNow: 'Comprar', all: 'Todo', freeShip: 'Envío gratis a todo el mundo', returns: 'Devolución en 30 días', fastShip: 'Envío en 24h desde almacén local',
