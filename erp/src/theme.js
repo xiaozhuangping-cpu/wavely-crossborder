@@ -55,6 +55,13 @@ const build = (base, mode) => {
       MuiFormControl: { styleOverrides: { marginDense: { marginTop: 6, marginBottom: 6 } } },
       MuiMenu: { styleOverrides: { paper: { borderRadius: 8 } } },
       MuiSnackbarContent: { styleOverrides: { root: { borderRadius: 8 } } },
+      // 筛选栏（手机端）：搜索框与下拉框统一 40px 高
+      RaFilterForm: { styleOverrides: { root: {
+        alignItems: 'center',
+        '& .MuiFilledInput-root, & .MuiOutlinedInput-root': { height: 40, paddingTop: 0 },
+        '& .MuiSelect-select': { paddingTop: '8px !important', paddingBottom: '8px !important' },
+        '& .RaFilterFormInput-body': { alignItems: 'center' },
+      } } },
       RaList: { styleOverrides: { root: { '& .RaList-main': { minWidth: 0 }, '& .RaList-content': { border: 'none', borderRadius: 0, background: 'transparent' } } } },
       RaShow: { styleOverrides: { root: { '& .RaShow-card': { border: 'none', background: 'transparent' } } } },
       RaEdit: { styleOverrides: { root: { '& .RaEdit-card': { border: 'none', background: 'transparent' } } } },

@@ -42,13 +42,13 @@ export const ShopNameLink = ({ productId, skuId, title, subtitle }) => (
 
 const PRODUCT_COLS = [
   render('', ({ r }) => <Thumb src={r.image_url} />, { width: 72 }),
-  col('sku', 'SPU', { width: 130, cellStyle: { fontFamily: 'monospace', display: 'flex', alignItems: 'center' } }),
-  render('商品名（点击在独立站打开）', ({ r }) => <ShopNameLink productId={r.id} title={r.name?.zh} subtitle={r.name?.en} />, { flex: 2, minWidth: 220 }),
-  col('category', '类目', { width: 100 }),
+  col('sku', 'SPU', { width: 140, cellStyle: { fontFamily: 'monospace', display: 'flex', alignItems: 'center' }, filterSpec: { type: 'text', source: 'sku@ilike', placeholder: 'SPU' } }),
+  render('商品名（点击在独立站打开）', ({ r }) => <ShopNameLink productId={r.id} title={r.name?.zh} subtitle={r.name?.en} />, { flex: 2, minWidth: 220, filterSpec: { type: 'text', source: 'name->>zh@ilike', placeholder: '商品名', value: (p) => p.data?.name?.zh ?? '' } }),
+  col('category', '类目', { width: 120, filterSpec: { type: 'select', source: 'category', choices: CATEGORIES, placeholder: '全部类目' } }),
   render('规格', ({ r }) => <Chip size="small" variant="outlined" label={`${r.option_name?.zh ?? '规格'} · ${r.skus?.length ?? 0} 个 SKU`} />, { width: 150 }),
   render('售价', ({ r }) => priceRange(r.skus), { field: 'price_usd', sortable: true, width: 160 }),
   render('起售价毛利', ({ r }) => <MarginChip record={r} />, { width: 130 }),
-  render('状态', ({ r }) => STATUS.find((x) => x.id === r.status)?.name, { field: 'status', sortable: true, width: 90 }),
+  render('状态', ({ r }) => STATUS.find((x) => x.id === r.status)?.name, { field: 'status', sortable: true, width: 110, filterSpec: { type: 'select', source: 'status', choices: STATUS, placeholder: '全部' } }),
 ];
 
 // 在独立站打开（新标签页）
@@ -69,8 +69,8 @@ const priceRange = (skus = []) => {
 
 const filters = [
   <SearchInput key="q" source="sku@ilike" placeholder="搜索 SPU 编码" alwaysOn />,
-  <SelectInput key="c" source="category" choices={CATEGORIES} alwaysOn />,
-  <SelectInput key="s" source="status" choices={STATUS} />,
+  <SelectInput key="c" source="category" choices={CATEGORIES} alwaysOn label={false} emptyText="全部类目" />,
+  <SelectInput key="s" source="status" choices={STATUS} label={false} emptyText="全部状态" />,
 ];
 
 const LIST_META = { columns: ['*', 'skus(id,price_usd,status)'] };
@@ -78,7 +78,8 @@ const LIST_META = { columns: ['*', 'skus(id,price_usd,status)'] };
 export const ProductList = () => {
   const isSmall = useMediaQuery((t) => t.breakpoints.down('md'));
   return (
-    <List filters={filters} sort={{ field: 'sku', order: 'ASC' }} queryOptions={{ meta: LIST_META }} title="商品">
+    <List filters={isSmall ? filters : undefined} pagination={isSmall ? undefined : false} perPage={25}
+      sort={{ field: 'sku', order: 'ASC' }} queryOptions={{ meta: LIST_META }} title="商品">
       {isSmall ? (
         <SimpleList leftAvatar={(r) => <Thumb src={r.image_url} size={40} />} primaryText={(r) => r.name?.zh}
           secondaryText={(r) => `${r.sku} · ${r.skus?.length ?? 0} 个 SKU`} tertiaryText={(r) => priceRange(r.skus)} linkType="edit" />
@@ -135,7 +136,7 @@ const SkuTab = () => {
         <TextInput fullWidth={false} sx={{ width: 200 }} source="option_name.es" label="Opción (ES)" />
       </Stack>
       <ReferenceManyField reference="v_skus" target="product_id" sort={{ field: 'sort', order: 'ASC' }} perPage={50}>
-        <AgList columnDefs={SKU_GRID_COLS.filter((c) => c.headerName !== '商品 / 规格')} rowClick={(id) => `/skus/${id}`} rowHeight={48} />
+        <AgList columnDefs={SKU_GRID_COLS.filter((c) => !['商品 / 规格', '类目'].includes(c.headerName)).map(({ filterSpec, ...c }) => c)} rowClick={(id) => `/skus/${id}`} rowHeight={48} pagination={false} />
       </ReferenceManyField>
       <Button component="a" href={`#/skus/create?source=${encodeURIComponent(JSON.stringify({ product_id: p.id, sku: `${p.sku}-`, weight_g: p.weight_g, price_usd: p.price_usd, cost_cny: p.cost_cny }))}`}
         startIcon={<AddIcon />} variant="outlined" sx={{ mt: 2 }}>添加 SKU</Button>

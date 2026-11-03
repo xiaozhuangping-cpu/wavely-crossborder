@@ -131,29 +131,30 @@ const NameLink = ({ r }) => (
 const mono = { fontFamily: 'monospace', display: 'flex', alignItems: 'center' };
 export const SKU_GRID_COLS = [
   render('', ({ r }) => <Thumb src={r.image_url} />, { width: 72 }),
-  col('sku', 'SKU', { width: 170, cellStyle: mono }),
-  render('商品 / 规格', NameLink, { flex: 2, minWidth: 200 }),
+  col('sku', 'SKU', { width: 180, cellStyle: mono, filterSpec: { type: 'text', source: 'sku@ilike', placeholder: 'SKU' } }),
+  render('商品 / 规格', NameLink, { flex: 2, minWidth: 200, filterSpec: { type: 'text', source: 'product_name@ilike', placeholder: '商品名', value: (p) => p.data?.product_name ?? '' } }),
+  col('category', '类目', { width: 110, filterSpec: { type: 'select', source: 'category', choices: CATEGORIES, placeholder: '全部类目' } }),
   render('规格值', ({ r }) => r.option_label, { field: 'option_label', sortable: true, width: 110 }),
-  col('barcode', '条码', { width: 140, cellStyle: mono }),
+  col('barcode', '条码', { width: 150, cellStyle: mono, filterSpec: { type: 'text', source: 'barcode@ilike', placeholder: '条码' } }),
   render('售价', ({ r }) => fmtMoney(r.price_usd), { field: 'price_usd', sortable: true, width: 110, type: 'rightAligned' }),
   render('成本', ({ r }) => fmtMoney(r.cost_cny, 'CNY'), { field: 'cost_cny', sortable: true, width: 110, type: 'rightAligned' }),
   render('毛利率', MarginCell, { width: 90 }),
-  render('总库存', ({ r }) => <Chip size="small" color={r.low_stock ? 'warning' : 'default'} label={r.low_stock ? `${r.stock} · 有仓缺货` : r.stock} />, { field: 'stock', sortable: true, width: 140 }),
-  render('状态', ({ r }) => <SkuStatus status={r.status} />, { field: 'status', sortable: true, width: 90 }),
+  render('总库存', ({ r }) => <Chip size="small" color={r.low_stock ? 'warning' : 'default'} label={r.low_stock ? `${r.stock} · 有仓缺货` : r.stock} />, { field: 'stock', sortable: true, width: 150, filterSpec: { type: 'select', source: 'low_stock', choices: [{ id: true, name: '仅有仓缺货' }, { id: false, name: '库存充足' }], placeholder: '全部' } }),
+  render('状态', ({ r }) => <SkuStatus status={r.status} />, { field: 'status', sortable: true, width: 110, filterSpec: { type: 'select', source: 'status', choices: SKU_STATUS, placeholder: '全部' } }),
 ];
 const skuFilters = [
   <SearchInput key="q" source="sku@ilike" placeholder="搜索 SKU 编码" alwaysOn />,
   <TextInput key="b" source="barcode@ilike" label="条码" />,
   <TextInput key="n" source="product_name@ilike" label="商品名" />,
-  <SelectInput key="c" source="category" choices={CATEGORIES} alwaysOn />,
-  <SelectInput key="s" source="status" choices={SKU_STATUS} />,
+  <SelectInput key="c" source="category" choices={CATEGORIES} alwaysOn label={false} emptyText="全部类目" />,
+  <SelectInput key="s" source="status" choices={SKU_STATUS} label={false} emptyText="全部状态" />,
   <BooleanInput key="l" source="low_stock" label="只看低库存" />,
 ];
 
 export const SkuList = () => {
   const isSmall = useMediaQuery((t) => t.breakpoints.down('md'));
   return (
-    <List resource="v_skus" filters={skuFilters} sort={{ field: 'sku', order: 'ASC' }} perPage={50} title="SKU 管理">
+    <List resource="v_skus" filters={isSmall ? skuFilters : undefined} pagination={isSmall ? undefined : false} sort={{ field: 'sku', order: 'ASC' }} perPage={50} title="SKU 管理">
       {isSmall ? (
         <SimpleList leftAvatar={(r) => <Thumb src={r.image_url} size={40} />} primaryText={(r) => `${r.product_name} · ${r.option_label ?? ''}`}
           secondaryText={(r) => `${r.sku} · 库存 ${r.stock}`} tertiaryText={(r) => fmtMoney(r.price_usd)} linkType={(r) => `/skus/${r.id}`} />
