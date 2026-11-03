@@ -36,11 +36,21 @@ const getRowId = (p) => String(p.data.id);
 // 与键顺序无关的比较
 const stable = (o = {}) => JSON.stringify(Object.keys(o).sort().map((k) => [k, o[k]]));
 
+// 单元格内容统一单行省略：单元格为了垂直居中用了 flex，文字节点不会自动截断，需包一层
+const ELLIPSIS = { minWidth: 0, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' };
+const textOf = (v) => (typeof v === 'string' || typeof v === 'number' ? String(v) : undefined);
+const withEllipsis = (inner) => (p) => {
+  const out = inner ? inner(p) : (p.valueFormatted ?? p.value);
+  if (out == null || out === '') return null;
+  return <Box title={textOf(out)} sx={ELLIPSIS}>{out}</Box>;
+};
+
 // filterSpec → AG Grid 列配置（列 id 用筛选字段，便于和 react-admin filterValues 对应）
 const buildCol = ({ filterSpec, ...c }, sort) => {
   const colId = c.colId ?? c.field ?? filterSpec?.source;
   const base = {
     ...c, colId,
+    cellRenderer: withEllipsis(c.cellRenderer),
     sortable: c.sortable ?? !!c.field,
     sort: c.field && sort?.field === c.field ? sort.order.toLowerCase() : null,
     comparator: () => 0,          // 数据已由服务端排序
@@ -197,7 +207,10 @@ export default function AgList({ columnDefs, rowClick, bulkActions, actions, row
           {pagination && <Pager />}
         </Stack>
       )}
-      <Box sx={{ position: 'relative', ...(fixedHeight ? { height: fixedHeight } : {}) }}>
+      <Box sx={{ position: 'relative', ...(fixedHeight ? { height: fixedHeight } : {}),
+        // 单元格内容不得撑出单元格（ag-cell-wrapper 默认按内容宽度），配合 withEllipsis 显示省略号
+        '& .ag-cell': { overflow: 'hidden' },
+        '& .ag-cell-wrapper, & .ag-cell-value': { minWidth: 0, maxWidth: '100%', overflow: 'hidden' } }}>
         <AgGridReact
           ref={gridRef}
           theme={theme}

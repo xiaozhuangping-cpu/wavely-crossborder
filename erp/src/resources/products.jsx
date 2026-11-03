@@ -123,6 +123,9 @@ const SavedListings = () => {
   );
 };
 
+// 列定义放在模块级，保持引用稳定（AgList 要求）
+const SKU_TAB_COLS = SKU_GRID_COLS.filter((c) => !['商品 / 规格', '类目'].includes(c.headerName)).map(({ filterSpec, ...c }) => c);
+
 // 「规格 SKU」标签页：该商品下的全部 SKU + 新增入口
 const SkuTab = () => {
   const p = useRecordContext();
@@ -136,8 +139,8 @@ const SkuTab = () => {
         <TextInput fullWidth={false} sx={{ width: 200 }} source="option_name.ja" label="オプション名 (JA)" />
         <TextInput fullWidth={false} sx={{ width: 200 }} source="option_name.es" label="Opción (ES)" />
       </Stack>
-      <ReferenceManyField reference="v_skus" target="product_id" sort={{ field: 'sort', order: 'ASC' }} perPage={50}>
-        <AgList columnDefs={SKU_GRID_COLS.filter((c) => !['商品 / 规格', '类目'].includes(c.headerName)).map(({ filterSpec, ...c }) => c)} rowClick={(id) => `/skus/${id}`} rowHeight={48} pagination={false} />
+      <ReferenceManyField reference="v_skus" target="product_id" sort={{ field: 'sort', order: 'ASC' }} perPage={25}>
+        <AgList columnDefs={SKU_TAB_COLS} rowClick={(id) => `/skus/${id}`} rowHeight={48} />
       </ReferenceManyField>
       <Button component="a" href={`#/skus/create?source=${encodeURIComponent(JSON.stringify({ product_id: p.id, sku: `${p.sku}-`, weight_g: p.weight_g, price_usd: p.price_usd, cost_cny: p.cost_cny }))}`}
         startIcon={<AddIcon />} variant="outlined" sx={{ mt: 2 }}>添加 SKU</Button>

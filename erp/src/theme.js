@@ -66,6 +66,13 @@ const build = (base, mode) => {
       RaShow: { styleOverrides: { root: { '& .RaShow-card': { border: 'none', background: 'transparent' } } } },
       RaEdit: { styleOverrides: { root: { '& .RaEdit-card': { border: 'none', background: 'transparent' } } } },
       RaCreate: { styleOverrides: { root: { '& .RaCreate-card': { border: 'none', background: 'transparent' } } } },
+      // 表单底部操作栏：去掉默认灰底，改为贴底的白色栏 + 顶部分隔线
+      RaToolbar: { styleOverrides: { root: {
+        backgroundColor: gm.surface, borderTop: `1px solid ${gm.border}`, borderRadius: 0,
+        position: 'sticky', bottom: 0, zIndex: 2, minHeight: 64, paddingInline: 16, marginTop: 8,
+        '&.RaToolbar-desktopToolbar': { marginTop: 8 },
+        '& .MuiButton-containedPrimary.Mui-disabled': { backgroundColor: gm.search, color: gm.textSub },
+      } } },
       RaDatagrid: { styleOverrides: { root: { '& .RaDatagrid-headerCell': { background: gm.surface }, '& .RaDatagrid-row': { background: gm.readRow } } } },
     },
   };

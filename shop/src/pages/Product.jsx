@@ -8,6 +8,69 @@ import { productTitle, productName, productDesc, productBullets } from '../i18n'
 import { ProductArt, AddButton, ProductCard, Perks } from '../components/ui';
 import { ImageZoom, Thumbs } from '../components/ImageZoom';
 
+// ---------- 规格选择 ----------
+const SEP = ' / ';
+const COLLAPSE_AT = 12;
+const chipSx = { height: 'auto', minHeight: 38, maxWidth: '100%', px: 0.5, fontSize: 14, borderRadius: 2,
+  '& .MuiChip-label': { whiteSpace: 'normal', py: 0.75, lineHeight: 1.35 } };
+
+const OptionChips = ({ values, selected, onSelect, isAvailable = () => true }) => {
+  const [all, setAll] = useState(false);
+  const idx = values.indexOf(selected);
+  const shown = all || values.length <= COLLAPSE_AT || idx >= COLLAPSE_AT ? values : values.slice(0, COLLAPSE_AT);
+  return (
+    <Stack direction="row" sx={{ gap: 1, flexWrap: 'wrap' }}>
+      {shown.map((v) => (
+        <Chip key={v} label={v} onClick={() => onSelect(v)} clickable
+          color={v === selected ? 'primary' : 'default'} variant={v === selected ? 'filled' : 'outlined'}
+          sx={{ ...chipSx, opacity: v === selected || isAvailable(v) ? 1 : 0.45 }} />
+      ))}
+      {values.length > COLLAPSE_AT && idx < COLLAPSE_AT && (
+        <Button size="small" onClick={() => setAll((x) => !x)} sx={{ borderRadius: 2, minHeight: 38 }}>
+          {all ? '收起 / Less' : `+${values.length - COLLAPSE_AT}`}
+        </Button>
+      )}
+    </Stack>
+  );
+};
+
+// 多维规格（option_name 形如「颜色 / 尺码」）按维度分组选择；否则平铺，超过 12 个折叠
+const VariantPicker = ({ p, skus, sku, lang, onPick }) => {
+  const dims = optionLabel(p.option_name, lang).split(SEP);
+  const partsOf = (k) => optionLabel(k.option_value, lang).split(SEP);
+  const multi = dims.length > 1 && skus.every((k) => partsOf(k).length === dims.length);
+  const cur = sku ? partsOf(sku) : [];
+
+  if (!multi) {
+    const label = (k) => optionLabel(k.option_value, lang);
+    return (
+      <Box sx={{ mb: 3 }}>
+        <Typography sx={{ fontSize: 14, mb: 1 }}>{optionLabel(p.option_name, lang)}: <b>{sku && label(sku)}</b></Typography>
+        <OptionChips values={skus.map(label)} selected={sku && label(sku)} onSelect={(v) => onPick(skus.find((k) => label(k) === v))} />
+      </Box>
+    );
+  }
+  // 选某一维的值：优先保持其它维度不变；没有这个组合时取该值的第一个规格
+  const choose = (i, v) => {
+    const want = cur.map((x, j) => (j === i ? v : x));
+    onPick(skus.find((k) => partsOf(k).every((x, j) => x === want[j])) ?? skus.find((k) => partsOf(k)[i] === v));
+  };
+  const available = (i, v) => skus.some((k) => partsOf(k).every((x, j) => (j === i ? x === v : x === cur[j])));
+  return (
+    <Box sx={{ mb: 3, display: 'grid', gap: 2 }}>
+      {dims.map((d, i) => {
+        const values = [...new Set(skus.map((k) => partsOf(k)[i]))];
+        return (
+          <Box key={d}>
+            <Typography sx={{ fontSize: 14, mb: 1 }}>{d}: <b>{cur[i]}</b></Typography>
+            <OptionChips values={values} selected={cur[i]} onSelect={(v) => choose(i, v)} isAvailable={(v) => available(i, v)} />
+          </Box>
+        );
+      })}
+    </Box>
+  );
+};
+
 export const Product = () => {
   const { id } = useParams();
   const [params, setParams] = useSearchParams();
@@ -58,20 +121,7 @@ export const Product = () => {
           {productTitle(p, lang) !== productName(p, lang) && <Typography sx={{ color: 'text.secondary', mt: 1 }}>{productName(p, lang)}</Typography>}
           <Typography sx={{ fontFamily: 'var(--display)', fontSize: 34, fontWeight: 600, color: 'primary.main', my: 2.5 }}>{price(sku?.price_usd ?? p.price_usd)}</Typography>
 
-          {skus.length > 1 && (
-            <Box sx={{ mb: 3 }}>
-              <Typography sx={{ fontSize: 14, mb: 1 }}>
-                {optionLabel(p.option_name, lang)}: <b>{optionLabel(sku?.option_value, lang)}</b>
-              </Typography>
-              <Stack direction="row" sx={{ gap: 1, flexWrap: 'wrap' }}>
-                {skus.map((k) => (
-                  <Chip key={k.id} label={optionLabel(k.option_value, lang)} onClick={() => pick(k)} clickable
-                    color={k.id === sku?.id ? 'primary' : 'default'} variant={k.id === sku?.id ? 'filled' : 'outlined'}
-                    sx={{ height: 38, px: 0.5, fontSize: 14, borderRadius: 2 }} />
-                ))}
-              </Stack>
-            </Box>
-          )}
+          {skus.length > 1 && <VariantPicker p={p} skus={skus} sku={sku} lang={lang} tr={tr} onPick={pick} />}
 
           <Stack direction="row" spacing={1} sx={{ alignItems: 'center', color: 'success.main', mb: 3 }}><CheckIcon fontSize="small" /><Typography sx={{ fontSize: 14 }}>{tr.inStock} · {tr.fastShip}</Typography></Stack>
           <AddButton product={p} skuId={sku?.id} size="large" />

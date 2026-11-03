@@ -85,7 +85,10 @@ export const ImageZoom = ({ src, alt, paneWidth }) => {
 
 // 左侧竖排缩略图（亚马逊式：悬停预览，点击选中）
 export const Thumbs = ({ items, activeSrc, onHover, onPick }) => (
-  <Box sx={{ display: 'flex', flexDirection: { xs: 'row', md: 'column' }, gap: 1, overflowX: { xs: 'auto', md: 'visible' } }}>
+  // 规格图很多时（如 50+ 个颜色）限制高度，竖向滚动；p 给选中描边留出空间
+  <Box sx={{ display: 'flex', flexDirection: { xs: 'row', md: 'column' }, gap: 1, p: '3px', flexShrink: 0,
+    overflowX: { xs: 'auto', md: 'hidden' }, overflowY: { xs: 'hidden', md: 'auto' }, maxHeight: { md: 'min(560px, 70vh)' },
+    scrollbarWidth: 'thin' }}>
     {items.map((it) => (
       <Box key={it.src} component="button" type="button" onMouseEnter={() => onHover?.(it)} onClick={() => onPick?.(it)} aria-label={it.label}
         sx={{ width: 56, height: 56, p: 0.5, flexShrink: 0, bgcolor: '#fff', borderRadius: 2, cursor: 'pointer',

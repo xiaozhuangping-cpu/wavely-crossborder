@@ -45,7 +45,10 @@ export const draftRows = (d, cny, margin) => (d.skus ?? []).map((s) => {
 export const defaultName = (d) => (d.title ?? '').replace(/[【\[][^】\]]*[】\]]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 40) || d.title?.slice(0, 40) || '';
 
 export const buildPayload = ({ d, rows, zh, en = '', category, optionName, image, status }) => {
-  const desc = (d.attributes ?? []).slice(0, 12).map((a) => `${a.name}：${a.value}`).join('；');
+  // 描述取商品属性；与规格同名的属性（1688 会把全部规格值重复列一遍）和过长的值跳过
+  const propNames = new Set((d.props ?? []).map((x) => x.name));
+  const desc = (d.attributes ?? []).filter((a) => !propNames.has(a.name) && String(a.value).length <= 60)
+    .slice(0, 12).map((a) => `${a.name}：${a.value}`).join('；');
   return {
     status,
     name: { zh: zh.trim(), ...(en.trim() ? { en: en.trim() } : {}) },
