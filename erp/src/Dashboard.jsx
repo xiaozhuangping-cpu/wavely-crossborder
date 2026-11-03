@@ -9,7 +9,7 @@ const Kpi = ({ label, value, hint, color = 'primary.main' }) => (
   <Card sx={{ height: '100%' }}>
     <CardContent>
       <Typography variant="body2" sx={{ color: 'text.secondary' }}>{label}</Typography>
-      <Typography variant="h4" sx={{ fontWeight: 800, color: color, my: 0.5, fontSize: { xs: '1.6rem', md: '2rem' } }}>{value}</Typography>
+      <Typography variant="h4" sx={{ fontWeight: 800, color: color, my: 0.5, fontSize: 'clamp(1.05rem, 1.7vw, 2rem)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</Typography>
       {hint && <Typography variant="caption" sx={{ color: 'text.secondary' }}>{hint}</Typography>}
     </CardContent>
   </Card>

@@ -10,7 +10,8 @@
 ## 结构
 
 ```
-erp/        跨境 ERP 后台（React + react-admin + ra-supabase-core + Recharts）
+erp/        跨境 ERP 后台（React + react-admin + ra-supabase-core + Recharts + assistant-ui）
+supabase/functions/ai-assistant/  AI 运营助手（DeepSeek，Deno 边缘函数）
 site/       演示入口页
 supabase/   数据库迁移：表结构、RLS、业务函数、演示数据、定时任务
 ```
@@ -24,6 +25,7 @@ supabase/   数据库迁移：表结构、RLS、业务函数、演示数据、�
 | 独立站下单 | `place_order()`（security definer，校验数量与收货信息） |
 | 物流推进 | `advance_shipments()`，pg_cron 每小时执行 |
 | 每日重置 | `reset_demo()`，pg_cron 每天北京时间 03:00 执行 |
+| AI 运营助手 | 边缘函数 `ai-assistant` 调用 DeepSeek 工具调用；只读工具服务端执行（遵守 RLS），写操作只生成提案、用户确认后执行；每访客每天 30 次、全站 1500 次 |
 | 保活 | GitHub Actions 每 3 天访问一次，避免免费项目被暂停 |
 
 前端只使用 publishable key（本就设计为公开），数据安全由 RLS 控制。
@@ -39,3 +41,14 @@ cd erp && npm install && npm run dev
 ## 部署
 
 推送到 `main` 后，GitHub Actions 自动构建并发布到 GitHub Pages。
+
+## AI 运营助手
+
+点击 ERP 右上角 ✦ 打开。可以问销售数据、找补货商品、生成多语言 Listing、批量发货。
+
+部署前需要设置密钥（只存在 Supabase 服务端）：
+
+```bash
+supabase secrets set DEEPSEEK_API_KEY=...
+supabase functions deploy ai-assistant --no-verify-jwt
+```

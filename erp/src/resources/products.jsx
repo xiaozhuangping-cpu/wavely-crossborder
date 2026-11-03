@@ -68,6 +68,25 @@ const LocalPrices = () => {
   );
 };
 
+const LOCALES = { en: 'English', de: 'Deutsch', ja: '日本語', es: 'Español', fr: 'Français' };
+const SavedListings = () => {
+  const p = useRecordContext();
+  const entries = Object.entries(p?.listing ?? {});
+  if (!entries.length) return <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>还没有保存的 Listing。打开右上角 ✦ AI 运营助手，让它帮你写一条吧。</Typography>;
+  return (
+    <Box sx={{ display: 'grid', gap: 2, width: '100%' }}>
+      {entries.map(([loc, l]) => (
+        <Box key={loc} sx={{ border: 1, borderColor: 'divider', borderRadius: 3, p: 2 }}>
+          <Chip size="small" label={LOCALES[loc] ?? loc} sx={{ mb: 1 }} />
+          <Typography sx={{ fontWeight: 600, mb: 1 }}>{l.title}</Typography>
+          <Box component="ul" sx={{ pl: 2.5, my: 0 }}>{(l.bullets ?? []).map((b, i) => <li key={i}><Typography sx={{ fontSize: 14 }}>{b}</Typography></li>)}</Box>
+          <Typography sx={{ fontSize: 14, color: 'text.secondary', mt: 1, whiteSpace: 'pre-wrap' }}>{l.description}</Typography>
+        </Box>
+      ))}
+    </Box>
+  );
+};
+
 const ProductForm = () => (
   <TabbedForm>
     <TabbedForm.Tab label="基本信息">
@@ -83,6 +102,9 @@ const ProductForm = () => (
       <TextInput source="name.es" label="Español" fullWidth />
       <TextInput source="description.zh" label="中文描述" multiline fullWidth />
       <TextInput source="description.en" label="English description" multiline fullWidth />
+    </TabbedForm.Tab>
+    <TabbedForm.Tab label="AI Listing">
+      <SavedListings />
     </TabbedForm.Tab>
     <TabbedForm.Tab label="价格与利润">
       <NumberInput source="cost_cny" validate={required()} />

@@ -26,6 +26,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import LanguageIcon from '@mui/icons-material/Language';
 import { PLATFORMS } from './constants';
+import { AssistantProvider, AssistantPanel, Sparkle } from './ai/AssistantPanel';
 
 export const ordersUrl = (filter = {}) => `/orders?filter=${encodeURIComponent(JSON.stringify(filter))}`;
 
@@ -103,7 +104,7 @@ const UserAvatar = () => {
   );
 };
 
-const TopBar = ({ onMenu }) => {
+const TopBar = ({ onMenu, onAi, aiOpen }) => {
   const small = useMediaQuery((t) => t.breakpoints.down('sm'));
   return (
     <Box component="header" sx={{ height: 64, display: 'flex', alignItems: 'center', gap: 1, pl: { xs: 1, sm: 1.5, md: 0 }, pr: { xs: 1, sm: 1.5 }, flexShrink: 0 }}>
@@ -115,6 +116,12 @@ const TopBar = ({ onMenu }) => {
       <SearchBar />
       <Box sx={{ flex: { md: 1 } }} />
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+        <Tooltip title="AI 运营助手">
+          <IconButton onClick={onAi} aria-label="AI 运营助手" aria-pressed={aiOpen}
+            sx={(t) => ({ bgcolor: aiOpen ? t.palette.gm.navActive : 'transparent' })}>
+            <Sparkle size={22} />
+          </IconButton>
+        </Tooltip>
         <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center' }}>
           <LoadingIndicator />
           <ToggleThemeButton />
@@ -214,11 +221,15 @@ export const GmailLayout = ({ children }) => {
   const [open, setOpen] = useSidebarState();
   const isMobile = useMediaQuery((t) => t.breakpoints.down('md'));
   const [drawer, setDrawer] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiKey, setAiKey] = useState(0);         // 改变 key = 开启新对话
   const { pathname } = useLocation();
+  const panel = <AssistantPanel onClose={() => setAiOpen(false)} onReset={() => setAiKey((k) => k + 1)} />;
 
   return (
+    <AssistantProvider key={aiKey}>
     <Box sx={{ height: '100dvh', display: 'flex', flexDirection: 'column', bgcolor: 'gm.bg', color: 'text.primary', overflow: 'hidden' }}>
-      <TopBar onMenu={() => (isMobile ? setDrawer(true) : setOpen(!open))} />
+      <TopBar onMenu={() => (isMobile ? setDrawer(true) : setOpen(!open))} onAi={() => setAiOpen((v) => !v)} aiOpen={aiOpen} />
       <Box sx={{ flex: 1, display: 'flex', minHeight: 0 }}>
         {isMobile ? (
           <Drawer open={drawer} onClose={() => setDrawer(false)} slotProps={{ paper: { sx: { bgcolor: 'gm.bg', width: 280 } } }}>
@@ -233,7 +244,19 @@ export const GmailLayout = ({ children }) => {
                 borderRadius: { md: 4 }, mr: { md: 2 }, mb: { md: 2 } }}>
           {pathname.startsWith('/orders') ? children : <Box sx={{ px: { xs: 1.5, md: 3 }, pb: 10 }}>{children}</Box>}
         </Box>
+        {/* AI 面板：桌面端在右侧常驻（关闭时只隐藏，保留对话），手机端为右侧抽屉 */}
+        {!isMobile && (
+          <Box sx={{ width: 400, flexShrink: 0, display: aiOpen ? 'flex' : 'none', mr: 2, mb: 2, borderRadius: 4, overflow: 'hidden' }}>
+            {panel}
+          </Box>
+        )}
       </Box>
+      {isMobile && (
+        <Drawer anchor="right" open={aiOpen} onClose={() => setAiOpen(false)} keepMounted
+          slotProps={{ paper: { sx: { width: '100vw', maxWidth: 480 } } }}>
+          {panel}
+        </Drawer>
+      )}
       {isMobile && !pathname.includes('/create') && (
         <Fab variant="extended" component={RouterLink} to="/products/create"
           sx={(t) => ({ position: 'fixed', right: 16, bottom: 20, bgcolor: t.palette.gm.compose, color: t.palette.gm.composeText, borderRadius: 4, '&:hover': { bgcolor: t.palette.gm.composeHover } })}>
@@ -242,5 +265,6 @@ export const GmailLayout = ({ children }) => {
       )}
       <CheckForApplicationUpdate />
     </Box>
+    </AssistantProvider>
   );
 };
