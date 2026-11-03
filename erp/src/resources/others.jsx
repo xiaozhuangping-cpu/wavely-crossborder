@@ -6,6 +6,10 @@ import {
 import { Chip, useMediaQuery, LinearProgress, Box, Typography } from '@mui/material';
 import SyncIcon from '@mui/icons-material/Sync';
 import { PLATFORMS, WAREHOUSE_KIND, COUNTRIES, SHIP_STATUS, toChoices } from '../constants';
+import { AgList, col, render } from '../grid';
+
+const mono = { fontFamily: 'monospace', display: 'flex', alignItems: 'center' };
+const dt = (v, time) => (v ? new Date(v).toLocaleString('zh-CN', time ? undefined : { dateStyle: 'medium' }) : '-');
 
 const useSmall = () => useMediaQuery((t) => t.breakpoints.down('md'));
 
@@ -32,15 +36,15 @@ export const InventoryList = () => (
       <SimpleList primaryText={(r) => `${r.product_name} · ${r.option_label ?? ''}`} secondaryText={(r) => `${r.sku} · ${r.warehouse_name}`}
                   tertiaryText={(r) => `${r.qty} / ${r.safety_qty}`} linkType={(r) => `/inventory/${r.id}`} />
     ) : (
-      <Datagrid rowClick={(id) => `/inventory/${id}`} bulkActionButtons={false}>
-        <TextField source="sku" />
-        <FunctionField source="product_name" render={(r) => <Box><Typography variant="body2">{r.product_name}</Typography><Typography variant="caption" sx={{ color: 'text.secondary' }}>{r.option_label}</Typography></Box>} />
-        <TextField source="warehouse_name" />
-        <FunctionField source="warehouse_kind" render={(r) => <Chip size="small" variant="outlined" label={WAREHOUSE_KIND[r.warehouse_kind]} />} />
-        <FunctionField source="qty" render={(r) => <StockBar r={r} />} />
-        <NumberField source="safety_qty" />
-        <FunctionField source="low_stock" render={(r) => r.low_stock && <Chip size="small" color="error" label="需补货" />} />
-      </Datagrid>
+      <AgList rowClick={(id) => `/inventory/${id}`} columnDefs={[
+        col('sku', 'SKU', { width: 170, cellStyle: mono }),
+        render('商品 / 规格', ({ r }) => <Box sx={{ lineHeight: 1.3 }}><Typography variant="body2">{r.product_name}</Typography><Typography variant="caption" sx={{ color: 'text.secondary' }}>{r.option_label}</Typography></Box>, { field: 'product_name', sortable: true, flex: 2, minWidth: 180 }),
+        col('warehouse_name', '仓库', { width: 150 }),
+        render('仓库类型', ({ r }) => <Chip size="small" variant="outlined" label={WAREHOUSE_KIND[r.warehouse_kind]} />, { field: 'warehouse_kind', sortable: true, width: 110 }),
+        render('可用库存', ({ r }) => <StockBar r={r} />, { field: 'qty', sortable: true, width: 160 }),
+        col('safety_qty', '安全库存', { width: 100, type: 'rightAligned' }),
+        render('', ({ r }) => r.low_stock && <Chip size="small" color="error" label="需补货" />, { width: 100 }),
+      ]} />
     )}
   </List>
 );
@@ -68,12 +72,12 @@ export const ShopList = () => (
     {useSmall() ? (
       <SimpleList primaryText={(r) => r.name} secondaryText={(r) => `${PLATFORMS[r.platform]?.label} · ${r.currency}`} linkType="edit" />
     ) : (
-      <Datagrid rowClick="edit">
-        <FunctionField source="platform" render={(r) => <Chip size="small" label={PLATFORMS[r.platform]?.label} sx={{ bgcolor: PLATFORMS[r.platform]?.color, color: '#fff' }} />} />
-        <TextField source="name" />
-        <FunctionField source="country" render={(r) => COUNTRIES[r.country] ?? r.country} />
-        <TextField source="currency" />
-      </Datagrid>
+      <AgList rowClick={(id) => `/shops/${id}`} columnDefs={[
+        render('平台', ({ r }) => <Chip size="small" label={PLATFORMS[r.platform]?.label} sx={{ bgcolor: PLATFORMS[r.platform]?.color, color: '#fff' }} />, { field: 'platform', sortable: true, width: 140 }),
+        col('name', '店铺名', { flex: 1, minWidth: 180 }),
+        render('站点', ({ r }) => COUNTRIES[r.country] ?? r.country, { field: 'country', sortable: true, width: 140 }),
+        col('currency', '结算币种', { width: 110 }),
+      ]} />
     )}
   </List>
 );
@@ -88,12 +92,12 @@ export const CustomerList = () => (
     {useSmall() ? (
       <SimpleList primaryText={(r) => r.name} secondaryText={(r) => r.email} tertiaryText={(r) => COUNTRIES[r.country] ?? r.country} linkType={false} />
     ) : (
-      <Datagrid rowClick={false} bulkActionButtons={false}>
-        <TextField source="name" />
-        <EmailField source="email" />
-        <FunctionField source="country" render={(r) => COUNTRIES[r.country] ?? r.country} />
-        <DateField source="created_at" />
-      </Datagrid>
+      <AgList columnDefs={[
+        col('name', '姓名', { flex: 1, minWidth: 160 }),
+        render('邮箱', ({ r }) => <a href={`mailto:${r.email}`} style={{ color: 'inherit' }}>{r.email}</a>, { field: 'email', sortable: true, flex: 1, minWidth: 220 }),
+        render('国家', ({ r }) => COUNTRIES[r.country] ?? r.country, { field: 'country', sortable: true, width: 130 }),
+        render('注册时间', ({ r }) => dt(r.created_at), { field: 'created_at', sortable: true, width: 140 }),
+      ]} />
     )}
   </List>
 );
@@ -102,18 +106,18 @@ export const CustomerList = () => (
 export const ShipmentList = () => (
   <List filters={[<SearchInput key="q" source="tracking_no@ilike" placeholder="搜索运单号" alwaysOn />,
                   <SelectInput key="s" source="status" choices={toChoices(SHIP_STATUS)} alwaysOn />]}
-        sort={{ field: 'updated_at', order: 'DESC' }}>
+        sort={{ field: 'updated_at', order: 'DESC' }} queryOptions={{ meta: { columns: ['*', 'orders(order_no)'] } }}>
     {useSmall() ? (
       <SimpleList primaryText={(r) => r.tracking_no} secondaryText={(r) => `${r.carrier} · ${SHIP_STATUS[r.status]}`}
                   linkType={(r) => `/orders/${r.order_id}/show`} />
     ) : (
-      <Datagrid rowClick={(id, res, r) => `/orders/${r.order_id}/show`} bulkActionButtons={false}>
-        <TextField source="tracking_no" />
-        <TextField source="carrier" />
-        <ReferenceField source="order_id" reference="orders" link="show"><TextField source="order_no" /></ReferenceField>
-        <FunctionField source="status" render={(r) => <Chip size="small" color={r.status === 'delivered' ? 'success' : 'info'} label={SHIP_STATUS[r.status]} />} />
-        <DateField source="updated_at" showTime />
-      </Datagrid>
+      <AgList rowClick={(id, r) => `/orders/${r.order_id}/show`} columnDefs={[
+        col('tracking_no', '运单号', { width: 160, cellStyle: mono }),
+        col('carrier', '承运商', { width: 130 }),
+        render('订单', ({ r }) => r.orders?.order_no, { width: 170, cellStyle: mono }),
+        render('物流状态', ({ r }) => <Chip size="small" color={r.status === 'delivered' ? 'success' : 'info'} label={SHIP_STATUS[r.status]} />, { field: 'status', sortable: true, width: 130 }),
+        render('最近更新', ({ r }) => dt(r.updated_at, true), { field: 'updated_at', sortable: true, flex: 1, minWidth: 170 }),
+      ]} />
     )}
   </List>
 );
@@ -144,12 +148,12 @@ const RefreshRates = () => {
 
 export const RateList = () => (
   <List pagination={false} sort={{ field: 'currency', order: 'ASC' }} actions={<TopToolbar><RefreshRates /></TopToolbar>}>
-    <Datagrid rowClick="edit" bulkActionButtons={false}>
-      <TextField source="currency" />
-      <NumberField source="rate_to_usd" options={{ maximumFractionDigits: 6 }} />
-      <FunctionField label="1 USD =" render={(r) => (1 / r.rate_to_usd).toFixed(r.currency === 'JPY' ? 1 : 4) + ' ' + r.currency} />
-      <DateField source="updated_at" showTime />
-    </Datagrid>
+    <AgList rowClick={(id) => `/exchange_rates/${id}`} columnDefs={[
+      col('currency', '币种', { width: 110 }),
+      render('1 单位 = ? USD', ({ r }) => Number(r.rate_to_usd).toFixed(6), { field: 'rate_to_usd', sortable: true, width: 160, type: 'rightAligned' }),
+      render('1 USD =', ({ r }) => (1 / r.rate_to_usd).toFixed(r.currency === 'JPY' ? 1 : 4) + ' ' + r.currency, { width: 160, type: 'rightAligned' }),
+      render('更新时间', ({ r }) => dt(r.updated_at, true), { field: 'updated_at', sortable: true, flex: 1, minWidth: 170 }),
+    ]} />
   </List>
 );
 export const RateEdit = () => (

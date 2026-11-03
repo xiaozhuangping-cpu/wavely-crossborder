@@ -18,6 +18,7 @@ import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { fmtMoney, shopUrl, WAREHOUSE_KIND } from '../constants';
+import { AgList, col, render } from '../grid';
 
 const CATEGORIES = ['家居', '户外', '宠物', '美妆', '数码配件'].map((c) => ({ id: c, name: c }));
 const SKU_STATUS = [{ id: 'active', name: '在售' }, { id: 'inactive', name: '已下架' }];
@@ -54,7 +55,7 @@ const margin = (r) => {
   const profit = Number(r.price_usd) - cost - freight - fee;
   return { profit, pct: Math.round((profit / Number(r.price_usd)) * 100) };
 };
-const MarginCell = ({ r }) => {
+export const MarginCell = ({ r }) => {
   const m = margin(r);
   return <Chip size="small" label={`${m.pct}%`} color={m.pct >= 25 ? 'success' : m.pct >= 10 ? 'warning' : 'error'} variant="outlined" />;
 };
@@ -119,6 +120,27 @@ const BulkStatus = ({ status }) => {
 const BulkActions = () => <><BulkPrice /><BulkStatus status="active" /><BulkStatus status="inactive" /></>;
 
 // ---------- 列表 ----------
+const NameLink = ({ r }) => (
+  <Box component="a" href={shopUrl(r.product_id, r.id)} target="_blank" rel="noopener" title="在独立站打开"
+    sx={{ color: 'inherit', textDecoration: 'none', lineHeight: 1.3, minWidth: 0, '&:hover .t': { color: 'primary.main', textDecoration: 'underline' } }}>
+    <Typography className="t" variant="body2" noWrap sx={{ fontWeight: 600 }}>{r.product_name ?? r.option_label} <OpenInNewIcon sx={{ fontSize: 12, verticalAlign: 'middle', opacity: 0.6 }} /></Typography>
+    <Typography variant="caption" noWrap sx={{ color: 'text.secondary', display: 'block' }}>{r.option_name}：{r.option_label}</Typography>
+  </Box>
+);
+
+const mono = { fontFamily: 'monospace', display: 'flex', alignItems: 'center' };
+export const SKU_GRID_COLS = [
+  render('', ({ r }) => <Thumb src={r.image_url} />, { width: 72 }),
+  col('sku', 'SKU', { width: 170, cellStyle: mono }),
+  render('商品 / 规格', NameLink, { flex: 2, minWidth: 200 }),
+  render('规格值', ({ r }) => r.option_label, { field: 'option_label', sortable: true, width: 110 }),
+  col('barcode', '条码', { width: 140, cellStyle: mono }),
+  render('售价', ({ r }) => fmtMoney(r.price_usd), { field: 'price_usd', sortable: true, width: 110, type: 'rightAligned' }),
+  render('成本', ({ r }) => fmtMoney(r.cost_cny, 'CNY'), { field: 'cost_cny', sortable: true, width: 110, type: 'rightAligned' }),
+  render('毛利率', MarginCell, { width: 90 }),
+  render('总库存', ({ r }) => <Chip size="small" color={r.low_stock ? 'warning' : 'default'} label={r.low_stock ? `${r.stock} · 有仓缺货` : r.stock} />, { field: 'stock', sortable: true, width: 140 }),
+  render('状态', ({ r }) => <SkuStatus status={r.status} />, { field: 'status', sortable: true, width: 90 }),
+];
 const skuFilters = [
   <SearchInput key="q" source="sku@ilike" placeholder="搜索 SKU 编码" alwaysOn />,
   <TextInput key="b" source="barcode@ilike" label="条码" />,
@@ -136,23 +158,7 @@ export const SkuList = () => {
         <SimpleList leftAvatar={(r) => <Thumb src={r.image_url} size={40} />} primaryText={(r) => `${r.product_name} · ${r.option_label ?? ''}`}
           secondaryText={(r) => `${r.sku} · 库存 ${r.stock}`} tertiaryText={(r) => fmtMoney(r.price_usd)} linkType={(r) => `/skus/${r.id}`} />
       ) : (
-        <Datagrid rowClick={(id) => `/skus/${id}`} bulkActionButtons={<BulkActions />}>
-          <FunctionField label="" render={(r) => <Thumb src={r.image_url} />} />
-          <FunctionField source="sku" label="SKU" render={(r) => <Box component="span" sx={{ whiteSpace: 'nowrap', fontFamily: 'monospace', fontSize: 13 }}>{r.sku}</Box>} />
-          <FunctionField label="商品 / 规格" render={(r) => (
-            <Box><Typography variant="body2" sx={{ fontWeight: 600 }}>{r.product_name}</Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>{r.option_name}：{r.option_label}</Typography></Box>
-          )} />
-          <TextField source="barcode" label="条码" />
-          <NumberField source="price_usd" label="售价" options={{ style: 'currency', currency: 'USD' }} />
-          <NumberField source="cost_cny" label="成本" options={{ style: 'currency', currency: 'CNY' }} />
-          <FunctionField label="毛利率" render={(r) => <MarginCell r={r} />} />
-          <FunctionField source="stock" label="总库存" render={(r) => <Chip size="small" color={r.low_stock ? 'warning' : 'default'} label={r.low_stock ? `${r.stock} · 有仓缺货` : r.stock} />} />
-          <FunctionField source="status" label="状态" render={(r) => <SkuStatus status={r.status} />} />
-          <FunctionField label="" render={(r) => (
-            <Tooltip title="在独立站查看"><IconButton size="small" component="a" href={shopUrl(r.product_id, r.id)} target="_blank" rel="noopener" onClick={(e) => e.stopPropagation()}><OpenInNewIcon fontSize="small" /></IconButton></Tooltip>
-          )} />
-        </Datagrid>
+        <AgList columnDefs={SKU_GRID_COLS.filter((c) => c.headerName !== '规格值')} rowClick={(id) => `/skus/${id}`} bulkActions={<BulkActions />} />
       )}
     </List>
   );

@@ -7,7 +7,8 @@ import { Chip, useMediaQuery, Box, Typography, Stack, Button, Tooltip, IconButto
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import AddIcon from '@mui/icons-material/Add';
 import { fmtMoney, shopUrl } from '../constants';
-import { Thumb, SkuStatus } from './skus';
+import { Thumb, SkuStatus, SKU_GRID_COLS } from './skus';
+import { AgList, col, render } from '../grid';
 
 const CATEGORIES = ['家居', '户外', '宠物', '美妆', '数码配件'].map((c) => ({ id: c, name: c }));
 const STATUS = [{ id: 'active', name: '在售' }, { id: 'draft', name: '草稿' }, { id: 'archived', name: '已下架' }];
@@ -29,6 +30,26 @@ export const MarginChip = ({ record }) => {
   const pct = Math.round(m.rate * 100);
   return <Chip size="small" label={`${fmtMoney(m.profit)} · ${pct}%`} color={pct >= 25 ? 'success' : pct >= 10 ? 'warning' : 'error'} />;
 };
+
+// 商品名链接：点击直接在独立站打开
+export const ShopNameLink = ({ productId, skuId, title, subtitle }) => (
+  <Box component="a" href={shopUrl(productId, skuId)} target="_blank" rel="noopener" title="在独立站打开"
+    sx={{ color: 'inherit', textDecoration: 'none', lineHeight: 1.3, minWidth: 0, '&:hover .t': { color: 'primary.main', textDecoration: 'underline' } }}>
+    <Typography className="t" variant="body2" noWrap sx={{ fontWeight: 600 }}>{title} <OpenInNewIcon sx={{ fontSize: 12, verticalAlign: 'middle', opacity: 0.6 }} /></Typography>
+    {subtitle && <Typography variant="caption" noWrap sx={{ color: 'text.secondary', display: 'block' }}>{subtitle}</Typography>}
+  </Box>
+);
+
+const PRODUCT_COLS = [
+  render('', ({ r }) => <Thumb src={r.image_url} />, { width: 72 }),
+  col('sku', 'SPU', { width: 130, cellStyle: { fontFamily: 'monospace', display: 'flex', alignItems: 'center' } }),
+  render('商品名（点击在独立站打开）', ({ r }) => <ShopNameLink productId={r.id} title={r.name?.zh} subtitle={r.name?.en} />, { flex: 2, minWidth: 220 }),
+  col('category', '类目', { width: 100 }),
+  render('规格', ({ r }) => <Chip size="small" variant="outlined" label={`${r.option_name?.zh ?? '规格'} · ${r.skus?.length ?? 0} 个 SKU`} />, { width: 150 }),
+  render('售价', ({ r }) => priceRange(r.skus), { field: 'price_usd', sortable: true, width: 160 }),
+  render('起售价毛利', ({ r }) => <MarginChip record={r} />, { width: 130 }),
+  render('状态', ({ r }) => STATUS.find((x) => x.id === r.status)?.name, { field: 'status', sortable: true, width: 90 }),
+];
 
 // 在独立站打开（新标签页）
 export const ShopLink = ({ productId, skuId, size = 'small' }) => (
@@ -62,19 +83,7 @@ export const ProductList = () => {
         <SimpleList leftAvatar={(r) => <Thumb src={r.image_url} size={40} />} primaryText={(r) => r.name?.zh}
           secondaryText={(r) => `${r.sku} · ${r.skus?.length ?? 0} 个 SKU`} tertiaryText={(r) => priceRange(r.skus)} linkType="edit" />
       ) : (
-        <Datagrid rowClick="edit" bulkActionButtons={false}>
-          <FunctionField label="" render={(r) => <Thumb src={r.image_url} />} />
-          <TextField source="sku" label="SPU" />
-          <FunctionField label="商品名" render={(r) => (
-            <Box><Typography variant="body2" sx={{ fontWeight: 600 }}>{r.name?.zh}</Typography><Typography variant="caption" sx={{ color: 'text.secondary' }}>{r.name?.en}</Typography></Box>
-          )} />
-          <TextField source="category" />
-          <FunctionField label="规格" render={(r) => <Chip size="small" variant="outlined" label={`${r.option_name?.zh ?? '规格'} · ${r.skus?.length ?? 0} 个 SKU`} />} />
-          <FunctionField label="售价" render={(r) => priceRange(r.skus)} />
-          <FunctionField label="起售价毛利" render={() => <MarginChip />} />
-          <FunctionField source="status" render={(r) => STATUS.find((s) => s.id === r.status)?.name} />
-          <FunctionField label="" render={(r) => <ShopLink productId={r.id} />} />
-        </Datagrid>
+        <AgList columnDefs={PRODUCT_COLS} rowClick={(id) => `/products/${id}`} />
       )}
     </List>
   );
@@ -126,17 +135,7 @@ const SkuTab = () => {
         <TextInput fullWidth={false} sx={{ width: 200 }} source="option_name.es" label="Opción (ES)" />
       </Stack>
       <ReferenceManyField reference="v_skus" target="product_id" sort={{ field: 'sort', order: 'ASC' }} perPage={50}>
-        <Datagrid rowClick={(id) => `/skus/${id}`} bulkActionButtons={false} empty={<Typography sx={{ color: 'text.secondary', py: 2 }}>还没有 SKU</Typography>}>
-          <FunctionField label="" render={(r) => <Thumb src={r.image_url} size={32} />} />
-          <TextField source="sku" label="SKU" />
-          <TextField source="option_label" label="规格值" />
-          <TextField source="barcode" label="条码" />
-          <NumberField source="price_usd" label="售价" options={{ style: 'currency', currency: 'USD' }} />
-          <NumberField source="cost_cny" label="成本" options={{ style: 'currency', currency: 'CNY' }} />
-          <FunctionField label="库存" render={(r) => <Chip size="small" color={r.low_stock ? 'warning' : 'default'} label={r.stock} />} />
-          <FunctionField label="状态" render={(r) => <SkuStatus status={r.status} />} />
-          <FunctionField label="" render={(r) => <ShopLink productId={r.product_id} skuId={r.id} />} />
-        </Datagrid>
+        <AgList columnDefs={SKU_GRID_COLS.filter((c) => c.headerName !== '商品 / 规格')} rowClick={(id) => `/skus/${id}`} rowHeight={48} />
       </ReferenceManyField>
       <Button component="a" href={`#/skus/create?source=${encodeURIComponent(JSON.stringify({ product_id: p.id, sku: `${p.sku}-`, weight_g: p.weight_g, price_usd: p.price_usd, cost_cny: p.cost_cny }))}`}
         startIcon={<AddIcon />} variant="outlined" sx={{ mt: 2 }}>添加 SKU</Button>
