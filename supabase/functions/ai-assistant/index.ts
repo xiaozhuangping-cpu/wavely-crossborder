@@ -81,7 +81,7 @@ async function runTool(db: SupabaseClient, name: string, a: Record<string, any>)
     }
     case 'get_product': {
       const kw = String(a.query ?? '').replace(/[%,()]/g, ' ').trim().slice(0, 40);
-      const rows = must(await db.from('products').select('id,sku,name,description,category,price_usd,cost_cny,weight_g,listing')
+      const rows = must(await db.from('products').select('id,sku,name,description,category,price_usd,cost_cny,weight_g,listing,option_name,skus(id,sku,option_value,barcode,price_usd,cost_cny,status)')
         .or(`sku.ilike.*${kw}*,name->>zh.ilike.*${kw}*,name->>en.ilike.*${kw}*`).limit(5));
       return { rows };
     }

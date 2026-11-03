@@ -11,7 +11,7 @@ import StopIcon from '@mui/icons-material/Stop';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { useStore, supabase, SUPABASE_URL, SUPABASE_KEY } from '../store';
 import { productTitle } from '../i18n';
-import { ProductArt, AddButton } from './ui';
+import { ProductArt, AddButton, PriceFrom } from './ui';
 import { Timeline } from '../pages/Track';
 
 // ---------- 运行时：流式读取 shop-assistant 的 SSE ----------
@@ -72,9 +72,9 @@ const ProductsTool = ({ result }) => {
           <Box component={RouterLink} to={`/p/${p.id}`} sx={{ textDecoration: 'none', color: 'inherit' }}>
             <ProductArt p={p} sx={{ borderRadius: 2, '& span': { fontSize: '48px !important' } }} />
             <Typography sx={{ fontSize: 13, fontWeight: 600, mt: 1, lineHeight: 1.3, height: 34, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{productTitle(p, lang)}</Typography>
-            <Typography sx={{ fontSize: 14, fontWeight: 700, color: 'primary.main', my: 0.5 }}>{price(p.price_usd)}</Typography>
+            <PriceFrom p={p} sx={{ fontSize: 14, fontWeight: 700, my: 0.5, fontFamily: 'inherit' }} />
           </Box>
-          <AddButton id={p.id} size="small" fullWidth openCart={false} />
+          <AddButton product={p} size="small" fullWidth openCart={false} />
         </Paper>
       ))}
     </Stack>

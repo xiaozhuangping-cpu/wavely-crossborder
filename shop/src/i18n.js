@@ -2,6 +2,7 @@ export const LANGS = { en: 'English', de: 'Deutsch', zh: '中文', ja: '日本�
 
 const dict = {
   en: {
+    chooseOption: 'Choose option', from: 'From',
     tagline: 'Thoughtful things for home, pets & the outdoors', heroTitle: 'Small upgrades,\nbig everyday joy', heroSub: 'Designed in Shenzhen, shipped worldwide from our local warehouses.',
     shopNow: 'Shop now', all: 'All', freeShip: 'Free worldwide shipping', returns: '30-day returns', fastShip: 'Ships in 24h from local warehouses',
     addToCart: 'Add to cart', added: 'Added', cart: 'Cart', emptyCart: 'Your cart is empty', subtotal: 'Subtotal', shipping: 'Shipping', free: 'Free', total: 'Total',
@@ -18,6 +19,7 @@ const dict = {
     cats: { 家居: 'Home', 户外: 'Outdoor', 宠物: 'Pets', 美妆: 'Beauty', 数码配件: 'Tech' }, aiNote: 'This demo store was built with AI assistance.',
   },
   de: {
+    chooseOption: 'Option wählen', from: 'Ab',
     tagline: 'Durchdachte Dinge für Zuhause, Haustiere & draußen', heroTitle: 'Kleine Upgrades,\ngroße Alltagsfreude', heroSub: 'Entworfen in Shenzhen, versendet aus lokalen Lagern weltweit.',
     shopNow: 'Jetzt shoppen', all: 'Alle', freeShip: 'Kostenloser Versand weltweit', returns: '30 Tage Rückgaberecht', fastShip: 'Versand in 24 h aus lokalem Lager',
     addToCart: 'In den Warenkorb', added: 'Hinzugefügt', cart: 'Warenkorb', emptyCart: 'Dein Warenkorb ist leer', subtotal: 'Zwischensumme', shipping: 'Versand', free: 'Kostenlos', total: 'Gesamt',
@@ -34,6 +36,7 @@ const dict = {
     cats: { 家居: 'Zuhause', 户外: 'Outdoor', 宠物: 'Haustiere', 美妆: 'Beauty', 数码配件: 'Technik' }, aiNote: 'Dieser Demo-Shop wurde mit KI-Unterstützung erstellt.',
   },
   zh: {
+    chooseOption: '选择规格', from: '起',
     tagline: '为家居、宠物与户外生活精选好物', heroTitle: '小小升级，\n日常大大满足', heroSub: '深圳设计，海外仓本地发货，送达全球。',
     shopNow: '立即选购', all: '全部', freeShip: '全球包邮', returns: '30 天无忧退货', fastShip: '海外仓 24 小时内发货',
     addToCart: '加入购物车', added: '已加入', cart: '购物车', emptyCart: '购物车是空的', subtotal: '小计', shipping: '运费', free: '免费', total: '合计',
@@ -50,6 +53,7 @@ const dict = {
     cats: { 家居: '家居', 户外: '户外', 宠物: '宠物', 美妆: '美妆', 数码配件: '数码配件' }, aiNote: '本演示站由 AI 辅助生成。',
   },
   ja: {
+    chooseOption: 'オプションを選ぶ', from: '〜',
     tagline: '暮らし・ペット・アウトドアのための小さな名品', heroTitle: '小さな工夫で、\n毎日をもっと快適に', heroSub: '深圳でデザイン、現地倉庫から世界へお届け。',
     shopNow: '今すぐ見る', all: 'すべて', freeShip: '全世界送料無料', returns: '30日間返品OK', fastShip: '現地倉庫から24時間以内に発送',
     addToCart: 'カートに入れる', added: '追加済み', cart: 'カート', emptyCart: 'カートは空です', subtotal: '小計', shipping: '送料', free: '無料', total: '合計',
@@ -66,6 +70,7 @@ const dict = {
     cats: { 家居: 'ホーム', 户外: 'アウトドア', 宠物: 'ペット', 美妆: 'ビューティー', 数码配件: 'ガジェット' }, aiNote: 'このデモストアは AI の支援を受けて作成されました。',
   },
   es: {
+    chooseOption: 'Elegir opción', from: 'Desde',
     tagline: 'Cosas bien pensadas para el hogar, mascotas y aire libre', heroTitle: 'Pequeñas mejoras,\ngran alegría diaria', heroSub: 'Diseñado en Shenzhen, enviado desde almacenes locales.',
     shopNow: 'Comprar', all: 'Todo', freeShip: 'Envío gratis a todo el mundo', returns: 'Devolución en 30 días', fastShip: 'Envío en 24h desde almacén local',
     addToCart: 'Añadir al carrito', added: 'Añadido', cart: 'Carrito', emptyCart: 'Tu carrito está vacío', subtotal: 'Subtotal', shipping: 'Envío', free: 'Gratis', total: 'Total',

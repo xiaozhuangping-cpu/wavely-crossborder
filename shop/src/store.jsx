@@ -20,7 +20,8 @@ export const StoreProvider = ({ children }) => {
   const [currency, setCurrency] = useState(() => load('wv.currency', LANG_CURRENCY[load('wv.lang', detectLang())] ?? 'USD'));
   const [rates, setRates] = useState({ USD: 1 });
   const [products, setProducts] = useState(null);
-  const [cart, setCart] = useState(() => load('wv.cart', []));      // [{id, qty}]
+  // [{skuId, qty}]；旧版按商品存的购物车直接丢弃
+  const [cart, setCart] = useState(() => load('wv.cart', []).filter((x) => x.skuId));
   const [cartOpen, setCartOpen] = useState(false);
   const [orders, setOrders] = useState(() => load('wv.orders', [])); // 最近下单的订单号
 
@@ -33,7 +34,7 @@ export const StoreProvider = ({ children }) => {
     supabase.from('exchange_rates').select('currency,rate_to_usd').then(({ data }) => {
       if (data) setRates(Object.fromEntries(data.map((r) => [r.currency, Number(r.rate_to_usd)])));
     });
-    supabase.from('products').select('id,sku,name,description,category,price_usd,weight_g,listing').order('id').then(({ data, error }) => {
+    supabase.from('products').select('id,sku,name,description,category,price_usd,weight_g,listing,image_url,option_name,skus(id,sku,option_value,price_usd,image_url,status,sort)').order('id').then(({ data, error }) => {
       setProducts(error ? [] : data);
     });
   }, []);
@@ -44,16 +45,19 @@ export const StoreProvider = ({ children }) => {
     return new Intl.NumberFormat(lang === 'zh' ? 'zh-CN' : lang, { style: 'currency', currency, maximumFractionDigits: currency === 'JPY' ? 0 : 2 }).format(currency === 'JPY' ? Math.round(v) : v);
   }, [rates, currency, lang]);
 
-  const add = (id, qty = 1) => setCart((c) => {
-    const i = c.findIndex((x) => x.id === id);
-    if (i < 0) return [...c, { id, qty: Math.min(qty, 10) }];
+  const add = (skuId, qty = 1) => setCart((c) => {
+    const i = c.findIndex((x) => x.skuId === skuId);
+    if (i < 0) return [...c, { skuId, qty: Math.min(qty, 10) }];
     const n = [...c]; n[i] = { ...n[i], qty: Math.min(n[i].qty + qty, 10) }; return n;
   });
-  const setQty = (id, qty) => setCart((c) => (qty <= 0 ? c.filter((x) => x.id !== id) : c.map((x) => (x.id === id ? { ...x, qty: Math.min(qty, 10) } : x))));
+  const setQty = (skuId, qty) => setCart((c) => (qty <= 0 ? c.filter((x) => x.skuId !== skuId) : c.map((x) => (x.skuId === skuId ? { ...x, qty: Math.min(qty, 10) } : x))));
   const clear = () => setCart([]);
 
-  const lines = useMemo(() => cart.map((l) => ({ ...l, product: products?.find((p) => p.id === l.id) })).filter((l) => l.product), [cart, products]);
-  const subtotalUsd = lines.reduce((s, l) => s + Number(l.product.price_usd) * l.qty, 0);
+  const lines = useMemo(() => cart.map((l) => {
+    const product = products?.find((p) => p.skus?.some((k) => k.id === l.skuId));
+    return { ...l, id: l.skuId, product, sku: product?.skus.find((k) => k.id === l.skuId) };
+  }).filter((l) => l.sku && l.sku.status === 'active'), [cart, products]);
+  const subtotalUsd = lines.reduce((s, l) => s + Number(l.sku.price_usd) * l.qty, 0);
   const shippingUsd = 0;   // 演示站全球包邮，与 place_order 记账一致
 
   const value = {
@@ -65,3 +69,9 @@ export const StoreProvider = ({ children }) => {
 };
 
 export const useStore = () => useContext(Ctx);
+
+// ---------- SKU 工具 ----------
+export const activeSkus = (p) => (p?.skus ?? []).filter((k) => k.status === 'active').sort((a, b) => a.sort - b.sort || a.id - b.id);
+export const optionLabel = (obj, lang) => obj?.[lang] || obj?.en || obj?.zh || '';
+export const priceFrom = (p) => { const ps = activeSkus(p).map((k) => Number(k.price_usd)); return ps.length ? Math.min(...ps) : Number(p?.price_usd); };
+export const hasVariants = (p) => activeSkus(p).length > 1;

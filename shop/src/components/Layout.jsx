@@ -8,7 +8,7 @@ import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
-import { useStore, CURRENCIES, ERP_URL } from '../store';
+import { useStore, CURRENCIES, ERP_URL, optionLabel } from '../store';
 import { LANGS, productTitle } from '../i18n';
 import { ProductArt } from './ui';
 
@@ -91,10 +91,11 @@ export const CartDrawer = () => {
           <Stack spacing={2}>
             {lines.map((l) => (
               <Stack key={l.id} direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-                <Box sx={{ width: 72, flexShrink: 0 }}><ProductArt p={l.product} sx={{ borderRadius: 2, '& span': { fontSize: '36px !important' } }} /></Box>
+                <Box sx={{ width: 72, flexShrink: 0 }}><ProductArt p={l.product} src={l.sku.image_url} sx={{ borderRadius: 2, '& span': { fontSize: '36px !important' } }} /></Box>
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Typography sx={{ fontSize: 14, fontWeight: 600, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{productTitle(l.product, lang)}</Typography>
-                  <Typography sx={{ fontSize: 14, color: 'primary.main', fontWeight: 600 }}>{price(l.product.price_usd)}</Typography>
+                  {l.product.skus.length > 1 && <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>{optionLabel(l.product.option_name, lang)}: {optionLabel(l.sku.option_value, lang)}</Typography>}
+                  <Typography sx={{ fontSize: 14, color: 'primary.main', fontWeight: 600 }}>{price(l.sku.price_usd)}</Typography>
                 </Box>
                 <Stack direction="row" sx={{ alignItems: 'center', border: 1, borderColor: 'divider', borderRadius: 999 }}>
                   <IconButton size="small" onClick={() => setQty(l.id, l.qty - 1)} aria-label="-"><RemoveIcon fontSize="small" /></IconButton>

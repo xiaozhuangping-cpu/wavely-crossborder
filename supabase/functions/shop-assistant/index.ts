@@ -21,7 +21,7 @@ Rules:
 1. Reply in the same language the shopper writes in (default ${LANG_NAME[lang]}). Be warm, concise, and helpful.
 2. For product questions ALWAYS call search_products first. Only recommend products returned by the tool; never invent products, prices, stock or features.
    The interface shows product cards with "Add to cart" buttons automatically, so do not list every field again — give a short reason for each pick.
-3. Prices from tools are in USD. If you mention a price, you may quote it in USD; the cards already show ${currency}.
+3. Products may have several variants (skus: color/size/pack…) with their own prices; mention the options briefly when relevant. Prices from tools are in USD. If you mention a price, you may quote it in USD; the cards already show ${currency}.
 4. For order status ask for the order number (format like WV261104123456) and call track_order. Never guess an order status. Use the order's country to pick the delivery estimate.
 5. If something is outside your knowledge (e.g. warranty claims, wholesale), say a human teammate will follow up by email — do not make promises.`;
 };
@@ -43,7 +43,7 @@ const tools = [
 
 async function runTool(db: SupabaseClient, name: string, a: Record<string, any>) {
   if (name === 'search_products') {
-    let q = db.from('products').select('id,sku,name,description,category,price_usd,listing').eq('status', 'active').order('price_usd').limit(Math.min(a.limit ?? 4, 6));
+    let q = db.from('products').select('id,sku,name,description,category,price_usd,listing,image_url,option_name,skus(id,sku,option_value,price_usd,image_url,status,sort)').eq('status', 'active').order('price_usd').limit(Math.min(a.limit ?? 4, 6));
     if (a.category) q = q.eq('category', a.category);
     if (a.max_price_usd) q = q.lte('price_usd', a.max_price_usd);
     const kw = String(a.query ?? '').replace(/[%,()*]/g, ' ').trim().slice(0, 40);

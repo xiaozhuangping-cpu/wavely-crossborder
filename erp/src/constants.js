@@ -37,3 +37,7 @@ export const toChoices = (obj) =>
 
 export const fmtMoney = (v, currency = 'USD') =>
   v == null ? '-' : new Intl.NumberFormat('zh-CN', { style: 'currency', currency, maximumFractionDigits: currency === 'JPY' ? 0 : 2 }).format(v);
+
+// 独立站商品页（可带 SKU 预选规格）
+export const SHOP_BASE = 'https://xiaozhuangping-cpu.github.io/wavely-crossborder/shop/';
+export const shopUrl = (productId, skuId) => `${SHOP_BASE}#/p/${productId}${skuId ? `?sku=${skuId}` : ''}`;

@@ -29,12 +29,12 @@ const inventoryFilters = [
 export const InventoryList = () => (
   <List resource="v_inventory" filters={inventoryFilters} sort={{ field: 'qty', order: 'ASC' }} title="库存" exporter={false}>
     {useSmall() ? (
-      <SimpleList primaryText={(r) => r.product_name} secondaryText={(r) => `${r.sku} · ${r.warehouse_name}`}
+      <SimpleList primaryText={(r) => `${r.product_name} · ${r.option_label ?? ''}`} secondaryText={(r) => `${r.sku} · ${r.warehouse_name}`}
                   tertiaryText={(r) => `${r.qty} / ${r.safety_qty}`} linkType={(r) => `/inventory/${r.id}`} />
     ) : (
       <Datagrid rowClick={(id) => `/inventory/${id}`} bulkActionButtons={false}>
         <TextField source="sku" />
-        <TextField source="product_name" />
+        <FunctionField source="product_name" render={(r) => <Box><Typography variant="body2">{r.product_name}</Typography><Typography variant="caption" sx={{ color: 'text.secondary' }}>{r.option_label}</Typography></Box>} />
         <TextField source="warehouse_name" />
         <FunctionField source="warehouse_kind" render={(r) => <Chip size="small" variant="outlined" label={WAREHOUSE_KIND[r.warehouse_kind]} />} />
         <FunctionField source="qty" render={(r) => <StockBar r={r} />} />

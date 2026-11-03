@@ -16,6 +16,7 @@ import ScheduleIcon from '@mui/icons-material/Schedule';
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
 import AssignmentReturnOutlinedIcon from '@mui/icons-material/AssignmentReturnOutlined';
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
+import QrCode2Icon from '@mui/icons-material/QrCode2';
 import WarehouseOutlinedIcon from '@mui/icons-material/WarehouseOutlined';
 import PeopleOutlinedIcon from '@mui/icons-material/PeopleOutlined';
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
@@ -185,14 +186,15 @@ const Sidebar = ({ collapsed, onNavigate }) => {
       active: isOrders((x) => x['status@in'] === '(refunded,cancelled)') },
   ];
   const manage = [
-    { to: '/products', icon: <Inventory2OutlinedIcon />, label: '商品' },
+    { to: '/products', icon: <Inventory2OutlinedIcon />, label: '商品 (SPU)' },
+    { to: '/v_skus', icon: <QrCode2Icon />, label: 'SKU 管理' },
     { to: '/v_inventory', icon: <WarehouseOutlinedIcon />, label: '库存', count: lowStock },
     { to: '/shipments', icon: <LocalShippingOutlinedIcon />, label: '物流' },
     { to: '/customers', icon: <PeopleOutlinedIcon />, label: '客户' },
     { to: '/shops', icon: <StorefrontOutlinedIcon />, label: '店铺' },
     { to: '/exchange_rates', icon: <CurrencyExchangeIcon />, label: '汇率' },
     { to: '/profit', icon: <CalculateOutlinedIcon />, label: '利润计算器' },
-  ].map((x) => ({ ...x, active: pathname.startsWith(x.to) || (x.to === '/v_inventory' && pathname.startsWith('/inventory')) }));
+  ].map((x) => ({ ...x, active: pathname.startsWith(x.to) || (x.to === '/v_inventory' && pathname.startsWith('/inventory')) || (x.to === '/v_skus' && pathname.startsWith('/skus')) }));
 
   return (
     <Box component="nav" sx={{ width: collapsed ? 72 : 256, flexShrink: 0, overflowY: 'auto', overflowX: 'hidden', pb: 2, transition: 'width .2s' }}>

@@ -50,6 +50,9 @@ const build = (base, mode) => {
       MuiTableCell: { styleOverrides: { root: { borderColor: gm.border }, head: { fontWeight: 600, color: gm.textSub, background: 'transparent' } } },
       MuiTableRow: { styleOverrides: { root: { '&.MuiTableRow-hover:hover': { backgroundColor: gm.unreadRow, boxShadow: gm.rowShadow, position: 'relative', zIndex: 1 } } } },
       MuiFilledInput: { styleOverrides: { root: { borderRadius: 8, '&::before, &::after': { display: 'none' } } } },
+      // react-admin 为没有提示文字的输入框也预留一行占位（只含零宽空格），隐藏掉以收紧表单间距；校验报错时仍然显示
+      MuiFormHelperText: { styleOverrides: { root: { marginTop: 2, lineHeight: 1.3, '&:not(.Mui-error):has(> span:only-child)': { display: 'none' } } } },
+      MuiFormControl: { styleOverrides: { marginDense: { marginTop: 6, marginBottom: 6 } } },
       MuiMenu: { styleOverrides: { paper: { borderRadius: 8 } } },
       MuiSnackbarContent: { styleOverrides: { root: { borderRadius: 8 } } },
       RaList: { styleOverrides: { root: { '& .RaList-main': { minWidth: 0 }, '& .RaList-content': { border: 'none', borderRadius: 0, background: 'transparent' } } } },

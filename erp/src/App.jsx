@@ -21,6 +21,7 @@ const Dashboard = () => <Suspense fallback={<LinearProgress sx={{ m: 2 }} />}><D
 import { ProfitCalculator } from './ProfitCalculator';
 import { OrderList, OrderShow, OrderEdit } from './resources/orders';
 import { ProductList, ProductEdit, ProductCreate } from './resources/products';
+import { SkuList, SkuEdit, SkuCreate } from './resources/skus';
 import { InventoryList, InventoryEdit, ShopList, ShopEdit, ShopCreate, CustomerList, ShipmentList, RateList, RateEdit } from './resources/others';
 
 const MyLayout = ({ children }) => <GmailLayout>{children}</GmailLayout>;
@@ -41,6 +42,8 @@ export const App = () => (
   >
     <Resource name="orders" list={OrderList} show={OrderShow} edit={OrderEdit} icon={ReceiptLongIcon} recordRepresentation="order_no" />
     <Resource name="products" list={ProductList} edit={ProductEdit} create={ProductCreate} icon={Inventory2Icon} recordRepresentation={(r) => r.name?.zh} />
+    <Resource name="v_skus" list={SkuList} />
+    <Resource name="skus" edit={SkuEdit} create={SkuCreate} recordRepresentation="sku" />
     <Resource name="v_inventory" list={InventoryList} />
     <Resource name="inventory" edit={InventoryEdit} />
     <Resource name="shipments" list={ShipmentList} icon={LocalShippingIcon} />

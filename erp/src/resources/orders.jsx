@@ -30,7 +30,7 @@ export const StatusChip = ({ source = 'status' }) => {
   return <Chip size="small" label={s?.label ?? r[source]} color={s?.color ?? 'default'} />;
 };
 
-const ORDER_COLUMNS = ['*', 'shops(name,platform)', 'customers(name)', 'order_items(qty,products(name))'];
+const ORDER_COLUMNS = ['*', 'shops(name,platform)', 'customers(name)', 'order_items(qty,products(name),skus(option_value))'];
 const ACTIONABLE = ['paid', 'pending'];       // 相当于「未读」：需要处理的订单
 const AVATAR_COLORS = ['#e8710a', '#1a73e8', '#d93025', '#188038', '#9334e6', '#e52592', '#12b5cb', '#f9ab00'];
 const avatarColor = (s = '') => AVATAR_COLORS[[...s].reduce((a, c) => a + c.charCodeAt(0), 0) % AVATAR_COLORS.length];
@@ -42,7 +42,7 @@ const fmtDate = (iso) => {
   return d.toLocaleDateString('zh-CN');
 };
 
-const snippet = (r) => (r.order_items ?? []).map((i) => `${i.products?.name?.zh ?? '商品'} ×${i.qty}`).join('，');
+const snippet = (r) => (r.order_items ?? []).map((i) => `${i.products?.name?.zh ?? '商品'}${i.skus?.option_value?.zh ? `（${i.skus.option_value.zh}）` : ''} ×${i.qty}`).join('，');
 
 const shipOrders = async (ids) => {
   const results = await Promise.allSettled(ids.map((id) => supabase.rpc('ship_order', { p_order_id: id })));
@@ -245,14 +245,14 @@ export const OrderList = () => (
 // ========== 详情（阅读邮件） ==========
 const Items = () => {
   const r = useRecordContext();
-  const { data: items = [] } = useGetList('order_items', { filter: { order_id: r?.id }, pagination: { page: 1, perPage: 50 }, sort: { field: 'id', order: 'ASC' }, meta: { columns: ['*', 'products(sku,name)'] } }, { enabled: !!r });
+  const { data: items = [] } = useGetList('order_items', { filter: { order_id: r?.id }, pagination: { page: 1, perPage: 50 }, sort: { field: 'id', order: 'ASC' }, meta: { columns: ['*', 'products(sku,name,image_url)', 'skus(sku,option_value)'] } }, { enabled: !!r });
   return (
     <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 3, overflow: 'hidden' }}>
       {items.map((i) => (
         <Stack key={i.id} direction="row" sx={{ justifyContent: 'space-between', gap: 2, px: 2, py: 1.5, borderBottom: 1, borderColor: 'divider' }}>
           <Box sx={{ minWidth: 0 }}>
             <Typography noWrap sx={{ fontWeight: 500 }}>{i.products?.name?.zh ?? '…'}</Typography>
-            <Typography variant="caption" noWrap sx={{ color: 'text.secondary', display: 'block' }}>{i.products?.sku} · {i.products?.name?.en}</Typography>
+            <Typography variant="caption" noWrap sx={{ color: 'text.secondary', display: 'block' }}>{i.skus?.sku ?? i.products?.sku} · {i.skus?.option_value?.zh ?? i.products?.name?.en}</Typography>
           </Box>
           <Typography sx={{ whiteSpace: 'nowrap' }}>{fmtMoney(i.unit_price, r.currency)} × {i.qty}</Typography>
         </Stack>

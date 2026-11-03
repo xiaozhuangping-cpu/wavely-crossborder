@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useParams, Link as RouterLink } from 'react-router-dom';
 import { Box, Typography, Grid, Stack, Button, TextField, MenuItem, Alert, Divider, Card } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import { useStore, supabase, ERP_URL } from '../store';
+import { useStore, supabase, ERP_URL, optionLabel } from '../store';
 import { productTitle } from '../i18n';
 
 const COUNTRIES = { US: '🇺🇸 United States', DE: '🇩🇪 Deutschland', GB: '🇬🇧 United Kingdom', JP: '🇯🇵 日本', SG: '🇸🇬 Singapore', MY: '🇲🇾 Malaysia', FR: '🇫🇷 France', ES: '🇪🇸 España', CA: '🇨🇦 Canada', AU: '🇦🇺 Australia' };
@@ -19,7 +19,7 @@ export const Checkout = () => {
     e.preventDefault();
     setBusy(true); setErr('');
     const { data, error } = await supabase.rpc('place_order', {
-      p_items: lines.map((l) => ({ product_id: l.id, qty: l.qty })),
+      p_items: lines.map((l) => ({ sku_id: l.skuId, qty: l.qty })),
       p_customer: { name: f.name.trim(), email: f.email.trim(), country: f.country },
       p_currency: currency,
     });
@@ -57,8 +57,8 @@ export const Checkout = () => {
             <Stack spacing={1.5}>
               {lines.map((l) => (
                 <Stack key={l.id} direction="row" sx={{ justifyContent: 'space-between', gap: 2 }}>
-                  <Typography sx={{ fontSize: 14 }}>{productTitle(l.product, lang)} × {l.qty}</Typography>
-                  <Typography sx={{ fontSize: 14, whiteSpace: 'nowrap' }}>{price(l.product.price_usd * l.qty)}</Typography>
+                  <Typography sx={{ fontSize: 14 }}>{productTitle(l.product, lang)}{l.product.skus.length > 1 ? ` · ${optionLabel(l.sku.option_value, lang)}` : ''} × {l.qty}</Typography>
+                  <Typography sx={{ fontSize: 14, whiteSpace: 'nowrap' }}>{price(l.sku.price_usd * l.qty)}</Typography>
                 </Stack>
               ))}
               <Divider />
