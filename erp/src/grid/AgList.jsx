@@ -2,15 +2,17 @@
 // 按 ag-dev skill 建议：所有非基础类型的 props 保持引用稳定，否则每次渲染都会重置列状态与行选择
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useListContext, Pagination } from 'react-admin';
+import { useListContext } from 'react-admin';
 import { AgGridReact } from 'ag-grid-react';
 import {
   ModuleRegistry, enableDevValidations, themeQuartz, colorSchemeDark, colorSchemeLight,
   ClientSideRowModelModule, ClientSideRowModelApiModule, RowApiModule, RowSelectionModule, RowStyleModule, CellStyleModule,
   ColumnApiModule, LocaleModule, TextFilterModule, CustomFilterModule,
 } from 'ag-grid-community';
-import { Box, Stack, Typography, IconButton, Tooltip, useTheme } from '@mui/material';
+import { Box, Stack, Typography, IconButton, Tooltip, Select, MenuItem, useTheme } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { SelectFilter, SelectFloatingFilter, passAll } from './filters';
 
 ModuleRegistry.registerModules([
@@ -61,7 +63,28 @@ const buildCol = ({ filterSpec, ...c }, sort) => {
   };
 };
 
-export default function AgList({ columnDefs, rowClick, bulkActions, rowHeight = 56, pagination = true }) {
+// Gmail 式分页：「第 1–50 条，共 711 条 ‹ ›」，翻页按钮始终可见（无上/下一页时置灰）
+const Pager = () => {
+  const { page = 1, perPage = 25, total = 0, setPage, setPerPage } = useListContext();
+  const from = total ? (page - 1) * perPage + 1 : 0;
+  const to = Math.min(page * perPage, total);
+  return (
+    <Stack direction="row" sx={{ alignItems: 'center', gap: 0.5 }}>
+      <Typography sx={{ fontSize: 12, color: 'text.secondary', mr: 0.5 }}>每页</Typography>
+      <Select size="small" variant="standard" disableUnderline value={perPage} onChange={(e) => setPerPage(Number(e.target.value))}
+        sx={{ fontSize: 12, mr: 1.5, '& .MuiSelect-select': { py: 0.25 } }}>
+        {[25, 50, 100].map((n) => <MenuItem key={n} value={n} sx={{ fontSize: 13 }}>{n}</MenuItem>)}
+      </Select>
+      <Typography sx={{ fontSize: 12, color: 'text.secondary', whiteSpace: 'nowrap' }}>第 {from}–{to} 条，共 {total.toLocaleString()} 条</Typography>
+      <Tooltip title="上一页"><span><IconButton size="small" disabled={page <= 1} onClick={() => setPage(page - 1)}><ChevronLeftIcon /></IconButton></span></Tooltip>
+      <Tooltip title="下一页"><span><IconButton size="small" disabled={to >= total} onClick={() => setPage(page + 1)}><ChevronRightIcon /></IconButton></span></Tooltip>
+    </Stack>
+  );
+};
+
+export default function AgList({ columnDefs, rowClick, bulkActions, rowHeight = 56, pagination = true, height }) {
+  // 有分页的列表固定高度、表格内滚动；小表格（无分页）自动高度
+  const fixedHeight = height ?? (pagination ? 'max(360px, calc(100dvh - 200px))' : null);
   const { data, isPending, sort, setSort, filterValues = {}, setFilters, displayedFilters, selectedIds = [], onSelect, onUnselectItems, total } = useListContext();
   const navigate = useNavigate();
   const gridRef = useRef(null);
@@ -83,7 +106,10 @@ export default function AgList({ columnDefs, rowClick, bulkActions, rowHeight = 
     headerBackgroundColor: gm.surface, headerTextColor: gm.textSub, headerFontWeight: 600, borderColor: gm.border,
     rowHoverColor: dark ? 'rgba(255,255,255,.04)' : '#f2f6fc', selectedRowBackgroundColor: gm.selectedRow,
     inputBackgroundColor: gm.search, inputBorder: false, inputFocusBorder: { color: t.palette.primary.main },
-    fontFamily: 'inherit', fontSize: 13, wrapperBorderRadius: 12, spacing: 7,
+    fontFamily: 'inherit', fontSize: 13, spacing: 7,
+    // Gmail 风格：无外框、无列线，只保留行分隔细线
+    wrapperBorder: false, wrapperBorderRadius: 0, columnBorder: false, headerColumnBorder: false, pinnedColumnBorder: false,
+    rowBorder: { color: gm.border }, headerRowBorder: { color: gm.border }, headerColumnResizeHandleColor: gm.border,
   }), [dark, gm, t.palette.primary.main]);
 
   // ---- 筛选：react-admin filterValues → 表格（初始化、URL 变化、清空时）----
@@ -156,16 +182,15 @@ export default function AgList({ columnDefs, rowClick, bulkActions, rowHeight = 
   return (
     <Box>
       {pagination && (
-        <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', minHeight: 44, mb: 0.5 }}>
-          <Typography sx={{ fontSize: 13, color: 'text.secondary', pl: 0.5 }}>{total != null ? `共 ${total} 条` : ''}</Typography>
-          <Pagination rowsPerPageOptions={[25, 50, 100]} sx={{ '& .MuiToolbar-root': { minHeight: 44, pr: 0 } }} />
+        <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'flex-end', minHeight: 40, px: 0.5 }}>
+          <Pager />
         </Stack>
       )}
-      <Box sx={{ position: 'relative' }}>
+      <Box sx={{ position: 'relative', ...(fixedHeight ? { height: fixedHeight } : {}) }}>
         {/* 批量操作栏覆盖在表头上（左侧全选框仍可见），避免表格跳动 */}
         {bulkActions && selectedIds.length > 0 && (
-          <Stack direction="row" sx={{ position: 'absolute', zIndex: 3, top: 1, left: 49, right: 1, height: 43, alignItems: 'center', gap: 1, px: 1,
-            borderTopRightRadius: 11, bgcolor: gm.navActive, color: gm.navActiveText, '& .MuiButton-root': { color: 'inherit' } }}>
+          <Stack direction="row" sx={{ position: 'absolute', zIndex: 3, top: 0, left: 48, right: 0, height: 44, alignItems: 'center', gap: 1, px: 1,
+            bgcolor: gm.navActive, color: gm.navActiveText, '& .MuiButton-root': { color: 'inherit' } }}>
             <Tooltip title="取消选择"><IconButton size="small" onClick={onUnselectItems} sx={{ color: 'inherit' }}><CloseIcon fontSize="small" /></IconButton></Tooltip>
             <Typography sx={{ fontSize: 14, fontWeight: 600, mr: 'auto' }}>已选 {selectedIds.length} 项</Typography>
             {bulkActions}
@@ -178,7 +203,7 @@ export default function AgList({ columnDefs, rowClick, bulkActions, rowHeight = 
           columnDefs={cols}
           defaultColDef={DEFAULT_COL}
           getRowId={getRowId}
-          domLayout="autoHeight"
+          domLayout={fixedHeight ? 'normal' : 'autoHeight'}
           rowHeight={rowHeight}
           headerHeight={44}
           floatingFiltersHeight={hasFilters ? 40 : 0}

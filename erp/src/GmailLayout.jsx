@@ -250,7 +250,7 @@ export const GmailLayout = ({ children }) => {
         <Box component="main" id="main-content"
           sx={{ flex: 1, minWidth: 0, overflow: 'auto', bgcolor: 'background.paper',
                 borderRadius: { md: 4 }, mr: { md: 2 }, mb: { md: 2 } }}>
-          {pathname.startsWith('/orders') ? children : <Box sx={{ px: { xs: 1.5, md: 3 }, pb: 10 }}>{children}</Box>}
+          {pathname.startsWith('/orders') ? children : <Box sx={{ px: { xs: 1.5, md: 3 }, pb: { xs: 10, md: 2 } }}>{children}</Box>}
         </Box>
         {/* AI 面板：桌面端在右侧常驻（关闭时只隐藏，保留对话），手机端为右侧抽屉 */}
         {!isMobile && (
