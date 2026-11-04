@@ -29,6 +29,7 @@
 ![ERP 经营看板](docs/screenshots/erp-dashboard.jpg)
 
 - Amazon / Shopee / TikTok Shop / 独立站订单统一管理，Gmail 式收件箱布局，批量发货
+- 顶部订单高级筛选：订单号、状态、店铺、国家、下单日期、美元金额范围与星标，可组合查询、回填修改或一键清空
 - SPU + 多规格 SKU、EAN-13 条码、国内仓 / 海外仓 / FBA 库存与安全库存预警
 - 多币种（7 种汇率）利润计算器，商品毛利实时估算
 - 商品「视频」标签：上传到 Supabase Storage，浏览器内自动截取封面

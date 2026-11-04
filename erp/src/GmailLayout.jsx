@@ -1,12 +1,10 @@
 import { lazy, Suspense, useState } from 'react';
-import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
+import { useLocation, Link as RouterLink } from 'react-router-dom';
 import { useSidebarState, useGetList, LoadingIndicator, ToggleThemeButton, useLogout, CheckForApplicationUpdate } from 'react-admin';
 import {
-  Box, IconButton, InputBase, Avatar, Tooltip, Drawer, Typography, Menu, MenuItem, ListItemIcon, Fab, useMediaQuery, Divider,
+  Box, IconButton, Avatar, Tooltip, Drawer, Typography, Menu, MenuItem, ListItemIcon, Fab, useMediaQuery, Divider,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
-import SearchIcon from '@mui/icons-material/Search';
-import TuneIcon from '@mui/icons-material/Tune';
 import AppsIcon from '@mui/icons-material/Apps';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import SpaceDashboardOutlinedIcon from '@mui/icons-material/SpaceDashboardOutlined';
@@ -41,7 +39,7 @@ import GavelOutlinedIcon from '@mui/icons-material/GavelOutlined';
 // AI 面板（assistant-ui、Markdown、图表）首次打开时才加载
 const AssistantPanel = lazy(() => import('./ai/AssistantPanel'));
 
-export const ordersUrl = (filter = {}) => `/orders?filter=${encodeURIComponent(JSON.stringify(filter))}`;
+import { OrderSearch, ordersUrl } from './OrderSearch';
 const ordersOf = (filter = {}) => `/purchase_orders?filter=${encodeURIComponent(JSON.stringify(filter))}`;
 
 const useCount = (resource, filter) => {
@@ -62,26 +60,6 @@ const Logo = ({ compact }) => (
     {!compact && <Typography sx={{ fontSize: 22, color: 'text.secondary', letterSpacing: '-.2px' }}>Wavely</Typography>}
   </Box>
 );
-
-const SearchBar = () => {
-  const navigate = useNavigate();
-  const [q, setQ] = useState('');
-  const [focus, setFocus] = useState(false);
-  return (
-    <Box component="form" onSubmit={(e) => { e.preventDefault(); navigate(ordersUrl(q.trim() ? { 'order_no@ilike': q.trim() } : {})); }}
-      sx={(t) => ({
-        flex: 1, maxWidth: 720, height: 48, display: 'flex', alignItems: 'center', borderRadius: 6, px: 0.5,
-        bgcolor: focus ? t.palette.gm.searchFocus : t.palette.gm.search,
-        boxShadow: focus ? '0 1px 1px 0 rgba(65,69,73,.3), 0 1px 3px 1px rgba(65,69,73,.15)' : 'none',
-        transition: 'background .2s, box-shadow .2s',
-      })}>
-      <IconButton type="submit" aria-label="搜索"><SearchIcon /></IconButton>
-      <InputBase placeholder="搜索订单号" value={q} onChange={(e) => setQ(e.target.value)} onFocus={() => setFocus(true)} onBlur={() => setFocus(false)}
-        sx={{ flex: 1, fontSize: 16 }} inputProps={{ 'aria-label': '搜索订单号' }} />
-      <Tooltip title="高级筛选"><IconButton component={RouterLink} to="/orders"><TuneIcon /></IconButton></Tooltip>
-    </Box>
-  );
-};
 
 const AppsMenu = () => {
   const [el, setEl] = useState(null);
@@ -143,7 +121,7 @@ const TopBar = ({ onMenu, onAi, aiOpen }) => {
         <IconButton onClick={onMenu} aria-label="主菜单"><MenuIcon /></IconButton>
         {!small && <Logo />}
       </Box>
-      <SearchBar />
+      <OrderSearch />
       <Box sx={{ flex: { md: 1 } }} />
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
         <Box sx={{ display: { xs: 'none', sm: 'flex' } }}><RoleSwitcher /></Box>
