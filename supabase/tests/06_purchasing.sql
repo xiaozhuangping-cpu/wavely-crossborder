@@ -3,8 +3,8 @@ begin;
 do $$ begin
   assert (select count(*) from suppliers) = 5, '演示供应商 5 家';
   assert not exists (select 1 from products where supplier_id is null), '演示商品都关联了供应商';
-  assert (select count(*) from purchase_orders) = 4, '演示采购单 4 张';
-  assert (select string_agg(status, ',' order by status) from purchase_orders) = 'draft,partial,placed,received', '演示采购单覆盖各状态';
+  assert (select count(*) from purchase_orders) = 5, '演示采购单 5 张';
+  assert (select string_agg(status, ',' order by status) from purchase_orders) = 'approval,draft,partial,placed,received', '演示采购单覆盖各状态';
   assert not exists (select 1 from purchase_orders where po_no is null or total_cny <= 0), '单号与金额已生成';
 end $$;
 
@@ -89,6 +89,6 @@ reset role;
 -- 每日重置后采购演示数据重建
 select reset_demo();
 do $$ begin
-  assert (select count(*) from purchase_orders) = 4 and (select count(*) from suppliers) = 5, '重置后重建采购演示数据';
+  assert (select count(*) from purchase_orders) = 5 and (select count(*) from suppliers) = 5, '重置后重建采购演示数据';
 end $$;
 rollback;

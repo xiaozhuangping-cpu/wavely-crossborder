@@ -34,11 +34,15 @@ import { PLATFORMS } from './constants';
 import { Sparkle } from './ai/Sparkle';
 import ExtensionOutlinedIcon from '@mui/icons-material/ExtensionOutlined';
 import { useExtension } from './collect/extension';
+import { RoleSwitcher, useRole } from './auth/role';
+import HistoryIcon from '@mui/icons-material/History';
+import GavelOutlinedIcon from '@mui/icons-material/GavelOutlined';
 
 // AI 面板（assistant-ui、Markdown、图表）首次打开时才加载
 const AssistantPanel = lazy(() => import('./ai/AssistantPanel'));
 
 export const ordersUrl = (filter = {}) => `/orders?filter=${encodeURIComponent(JSON.stringify(filter))}`;
+const ordersOf = (filter) => `/purchase_orders?filter=${encodeURIComponent(JSON.stringify(filter))}`;
 
 const useCount = (resource, filter) => {
   const { total } = useGetList(resource, { filter, pagination: { page: 1, perPage: 1 }, sort: { field: 'id', order: 'ASC' } });
@@ -142,6 +146,7 @@ const TopBar = ({ onMenu, onAi, aiOpen }) => {
       <SearchBar />
       <Box sx={{ flex: { md: 1 } }} />
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+        <Box sx={{ display: { xs: 'none', sm: 'flex' } }}><RoleSwitcher /></Box>
         <CollectorButton />
         <Tooltip title="AI 运营助手">
           <IconButton onClick={onAi} aria-label="AI 运营助手" aria-pressed={aiOpen}
@@ -197,6 +202,8 @@ const Sidebar = ({ collapsed, onNavigate }) => {
   const collected = useCount('import_drafts', { status: 'new' });
   const toReplenish = useCount('v_replenishment', {});
   const openPOs = useCount('purchase_orders', { 'status@in': '(draft,placed,partial)' });
+  const toApprove = useCount('purchase_orders', { status: 'approval' });
+  const { role } = useRole();
   const { data: shops = [] } = useGetList('shops', { pagination: { page: 1, perPage: 20 }, sort: { field: 'id', order: 'ASC' } });
 
   const isOrders = (pred) => onOrders && pred(f);
@@ -221,12 +228,15 @@ const Sidebar = ({ collapsed, onNavigate }) => {
     { to: '/shops', icon: <StorefrontOutlinedIcon />, label: '店铺' },
     { to: '/exchange_rates', icon: <CurrencyExchangeIcon />, label: '汇率' },
     { to: '/profit', icon: <CalculateOutlinedIcon />, label: '利润计算器' },
+    { to: '/audit_log', icon: <HistoryIcon />, label: '操作日志' },
   ].map((x) => ({ ...x, active: pathname.startsWith(x.to) || (x.to === '/v_inventory' && pathname.startsWith('/inventory')) || (x.to === '/v_skus' && pathname.startsWith('/skus')) }));
   const purchasing = [
     { to: '/v_replenishment', icon: <ShoppingCartCheckoutIcon />, label: '补货建议', count: toReplenish, bold: toReplenish > 0 },
-    { to: '/purchase_orders', icon: <ReceiptOutlinedIcon />, label: '采购单', count: openPOs },
+    { to: ordersOf({ status: 'approval' }), icon: <GavelOutlinedIcon />, label: '待审批', count: toApprove, bold: role === 'owner' && toApprove > 0,
+      match: (p, s) => p.startsWith('/purchase_orders') && s.includes('approval') },
+    { to: '/purchase_orders', icon: <ReceiptOutlinedIcon />, label: '采购单', count: openPOs, match: (p, s) => p.startsWith('/purchase_orders') && !s.includes('approval') },
     { to: '/suppliers', icon: <FactoryOutlinedIcon />, label: '供应商' },
-  ].map((x) => ({ ...x, active: pathname.startsWith(x.to) }));
+  ].map((x) => ({ ...x, active: x.match ? x.match(pathname, decodeURIComponent(search)) : pathname.startsWith(x.to) }));
 
   return (
     <Box component="nav" sx={{ width: collapsed ? 72 : 256, flexShrink: 0, overflowY: 'auto', overflowX: 'hidden', pb: 2, transition: 'width .2s' }}>

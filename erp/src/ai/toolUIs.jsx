@@ -180,8 +180,9 @@ const ProposeShip = ({ result }) => {
     setState('busy');
     const rs = await Promise.allSettled(rows.map((o) => supabase.rpc('ship_order', { p_order_id: o.id })));
     const ok = rs.filter((r) => r.status === 'fulfilled' && !r.value.error).length;
+    const denied = rs.map((r) => r.value?.error?.message).find((m) => m && /无权/.test(m));
     setN(ok); setState('done'); refresh();
-    notify(`已发货 ${ok} 单`, { type: ok ? 'success' : 'warning' });
+    notify(denied ?? `已发货 ${ok} 单`, { type: denied ? 'error' : ok ? 'success' : 'warning' });
   };
   return (
     <Card title={`待确认 · 批量发货 ${rows.length} 笔${result?.skipped ? `（${result.skipped} 笔状态不符已跳过）` : ''}`}

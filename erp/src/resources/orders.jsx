@@ -44,9 +44,12 @@ const fmtDate = (iso) => {
 
 const snippet = (r) => (r.order_items ?? []).map((i) => `${i.products?.name?.zh ?? '商品'}${i.skus?.option_value?.zh ? `（${i.skus.option_value.zh}）` : ''} ×${i.qty}`).join('，');
 
+// 返回 { ok, error }：error 为第一条失败原因（如当前身份无权发货），便于提示
 const shipOrders = async (ids) => {
   const results = await Promise.allSettled(ids.map((id) => supabase.rpc('ship_order', { p_order_id: id })));
-  return results.filter((r) => r.status === 'fulfilled' && !r.value.error).length;
+  const ok = results.filter((r) => r.status === 'fulfilled' && !r.value.error).length;
+  const fail = results.find((r) => r.status === 'rejected' || r.value?.error);
+  return { ok, error: fail ? (fail.reason?.message ?? fail.value?.error?.message) : null };
 };
 
 // ========== 列表（收件箱） ==========
@@ -100,8 +103,9 @@ const Toolbar = () => {
       {some ? (
         <>
           <Tooltip title="批量发货"><IconButton onClick={async () => {
-            const n = await shipOrders(selectedIds);
-            notify(`已发货 ${n} 单（仅「待发货」订单可发货）`, { type: n ? 'success' : 'warning' });
+            const { ok: n, error } = await shipOrders(selectedIds);
+            if (error && /无权/.test(error)) notify(error, { type: 'error' });
+            else notify(`已发货 ${n} 单（仅「待发货」订单可发货）`, { type: n ? 'success' : 'warning' });
             onUnselectItems(); refresh();
           }}><LocalShippingOutlinedIcon /></IconButton></Tooltip>
           <Tooltip title="添加星标"><IconButton onClick={() => updateMany('orders', { ids: selectedIds, data: { starred: true } }, { onSuccess: () => { onUnselectItems(); refresh(); } })}><StarBorderIcon /></IconButton></Tooltip>

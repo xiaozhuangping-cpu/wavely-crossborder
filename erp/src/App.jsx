@@ -24,6 +24,7 @@ import { OrderList, OrderShow, OrderEdit } from './resources/orders';
 import { ProductList, ProductEdit, ProductCreate } from './resources/products';
 import { SkuList, SkuEdit, SkuCreate } from './resources/skus';
 import { CollectBox } from './collect/CollectBox';
+import { AuditLogList } from './resources/audit';
 import { ReplenishmentList, PurchaseOrderList, PurchaseOrderShow, SupplierList, SupplierEdit, SupplierCreate } from './resources/purchasing';
 import { InventoryList, InventoryEdit, ShopList, ShopEdit, ShopCreate, CustomerList, ShipmentList, RateList, RateEdit } from './resources/others';
 
@@ -57,6 +58,7 @@ export const App = () => (
     <Resource name="purchase_orders" list={PurchaseOrderList} show={PurchaseOrderShow} options={{ label: '采购单' }} recordRepresentation="po_no" />
     <Resource name="purchase_order_items" />
     <Resource name="suppliers" list={SupplierList} edit={SupplierEdit} create={SupplierCreate} options={{ label: '供应商' }} recordRepresentation="name" />
+    <Resource name="audit_log" list={AuditLogList} options={{ label: '操作日志' }} />
     <Resource name="exchange_rates" list={RateList} edit={RateEdit} icon={CurrencyExchangeIcon} />
     <Resource name="order_items" />
     <Resource name="tracking_events" />
