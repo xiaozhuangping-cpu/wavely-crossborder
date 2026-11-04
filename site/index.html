@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Wavely 跨境电商演示</title>
-  <meta name="description" content="跨境电商全链路演示：ERP 后台、多语言独立站、选品插件" />
+  <meta name="description" content="跨境电商全链路演示：ERP 后台、多语言独立站、1688 采集插件、AI 助手与 AI 场景短片" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Wavely 跨境电商全链路演示" />
     <meta property="og:description" content="ERP 后台 + 多语言独立站 + AI 助手，基于 React 与 Supabase。AI 辅助生成。" />
@@ -31,6 +31,15 @@
     .card p { color:var(--muted); font-size:.92rem; }
     .tag { display:inline-block; font-size:.75rem; padding:2px 10px; border-radius:999px; border:1px solid var(--line); color:var(--muted); }
     .live { color:#16a34a; border-color:#16a34a55; }
+    h3 { font-size:1.35rem; margin:56px 0 4px; }
+    .sub { color:var(--muted); font-size:.92rem; }
+    .films { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:12px; margin-top:16px; }
+    .films a { position:relative; display:block; border-radius:14px; overflow:hidden; background:#000; aspect-ratio:16/9; }
+    .films video { width:100%; height:100%; object-fit:cover; display:block; }
+    .films span { position:absolute; left:12px; bottom:10px; color:#fff; font-weight:600; font-size:.9rem; text-shadow:0 1px 6px rgba(0,0,0,.5); }
+    .points { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:12px; margin-top:16px; padding:0; list-style:none; }
+    .points li { padding:16px 18px; border-radius:14px; background:var(--card); border:1px solid var(--line); font-size:.9rem; color:var(--muted); }
+    .points b { display:block; color:var(--text); font-size:.98rem; margin-bottom:2px; }
     footer { margin-top:56px; color:var(--muted); font-size:.85rem; }
     footer a { color:var(--brand); }
   </style>
@@ -45,19 +54,36 @@
     <a class="card" href="erp/">
       <span class="tag live">● 在线</span>
       <h2>🗂️ 跨境 ERP 后台</h2>
-      <p>Amazon / Shopee / TikTok Shop / 独立站订单统一管理，发货、库存预警、利润计算器。内置 ✦ AI 运营助手（DeepSeek）：问数据、写多语言 Listing、批量发货。</p>
+      <p>Amazon / Shopee / TikTok Shop / 独立站订单统一管理，SPU + 多规格 SKU、海外仓库存预警、利润计算器。内置 ✦ AI 运营助手：问数据、写多语言 Listing、批量发货（写操作需确认）。</p>
     </a>
     <a class="card" href="shop/">
       <span class="tag live">● 在线</span>
       <h2>🌐 多语言独立站</h2>
-      <p>中英德日西五种语言、6 种币种，内置 ✦ AI 客服（导购、查物流）。下单实时同步到 ERP，AI 写的德语 Listing 直接上架。</p>
+      <p>中英德日西五种语言、6 种币种，颜色 × 尺码分组选规格、商品图放大镜与场景短片。内置 ✦ AI 客服（导购、查物流）。下单实时同步到 ERP。</p>
     </a>
-    <div class="card">
-      <span class="tag">开发中</span>
-      <h2>🧩 选品比价插件</h2>
-      <p>浏览 Amazon 商品页时一键估算利润、采集商品。</p>
-    </div>
+    <a class="card" href="erp/#/import_drafts">
+      <span class="tag live">● 在线</span>
+      <h2>🧩 1688 采集插件</h2>
+      <p>Chrome / Edge 插件：1688 列表页勾选批量采集、详情页一键采集（规格、阶梯价、重量、图片）。在 ERP 采集箱按目标毛利定价，AI 本地化后批量导入上架。</p>
+    </a>
   </div>
+
+  <h3>✦ AI 场景短片</h3>
+  <p class="sub">以商品白底图为素材，用 Google Flow（Veo 3.1）生成；独立站首页与商品页同步展示，ERP 里可上传替换。</p>
+  <div class="films">
+    <a href="shop/#/p/7"><video src="shop/videos/WV-PET-001.mp4" poster="shop/videos/WV-PET-001.jpg" muted loop playsinline autoplay preload="metadata"></video><span>智能宠物饮水机</span></a>
+    <a href="shop/#/p/4"><video src="shop/videos/WV-OUT-001.mp4" poster="shop/videos/WV-OUT-001.jpg" muted loop playsinline autoplay preload="metadata"></video><span>超轻户外折叠椅</span></a>
+    <a href="shop/#/p/12"><video src="shop/videos/WV-ELE-001.mp4" poster="shop/videos/WV-ELE-001.jpg" muted loop playsinline autoplay preload="metadata"></video><span>三合一磁吸无线充</span></a>
+    <a href="shop/#/p/3"><video src="shop/videos/WV-HOM-003.mp4" poster="shop/videos/WV-HOM-003.jpg" muted loop playsinline autoplay preload="metadata"></video><span>感应夜灯（3 只装）</span></a>
+  </div>
+
+  <h3>技术亮点</h3>
+  <ul class="points">
+    <li><b>安全的 AI 工具调用</b>只读工具在服务端以访客身份执行（遵守 RLS），写操作只生成提案，确认后才执行；每访客每日配额。</li>
+    <li><b>自带模型，不占额度</b>可切换 DeepSeek、通义、Kimi、智谱、豆包、Claude、Gemini 等 OpenAI 兼容服务；Key 只存在浏览器、经服务端转发，不落库。</li>
+    <li><b>采集 → 上架全链路</b>插件读取页面内嵌数据，限速采集、遇验证暂停交给用户；ERP 里事务内生成 SPU + SKU，AI 翻译商品名、规格与描述。</li>
+    <li><b>无服务器 + 零成本运维</b>Supabase（Postgres、RLS、Edge Functions、Storage、pg_cron）+ GitHub Pages，数据每天 03:00 自动重置。</li>
+  </ul>
   <footer>by <a href="https://xiaozhuangping-cpu.github.io/">小庄 Studio</a> · React · react-admin · Supabase · GitHub Pages · AI 辅助生成</footer>
 </main>
 </body>
