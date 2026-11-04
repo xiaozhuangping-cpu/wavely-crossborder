@@ -43,6 +43,11 @@
     .promo { margin:32px 0 0; }
     .promo video { width:100%; aspect-ratio:16/9; display:block; border-radius:16px; background:#000; }
     .promo figcaption { color:var(--muted); font-size:.88rem; margin-top:8px; }
+    .contact { display:flex; flex-wrap:wrap; align-items:center; gap:24px; margin-top:48px; padding:24px; border:1px solid var(--line); border-radius:16px; background:var(--card); }
+    .contact h2 { font-size:1.35rem; margin:4px 0 8px; }
+    .contact p { color:var(--muted); font-size:.92rem; }
+    .contact a { display:block; width:264px; max-width:100%; flex-shrink:0; }
+    .contact img { display:block; width:100%; height:auto; border-radius:12px; }
     footer { margin-top:56px; color:var(--muted); font-size:.85rem; }
     footer a { color:var(--brand); }
   </style>
@@ -97,6 +102,18 @@
     <li><b>采集 → 上架全链路</b>插件读取页面内嵌数据，限速采集、遇验证暂停交给用户；ERP 里事务内生成 SPU + SKU，AI 翻译商品名、规格与描述。</li>
     <li><b>无服务器 + 零成本运维</b>Supabase（Postgres、RLS、Edge Functions、Storage、pg_cron）+ GitHub Pages，数据每天 03:00 自动重置。</li>
   </ul>
+  <section class="contact" aria-labelledby="contact-title">
+    <div>
+      <p class="eyebrow">联系作者</p>
+      <h2 id="contact-title">加我微信</h2>
+      <p>项目交流、反馈建议，欢迎扫码添加好友。</p>
+      <p>微信昵称：xiaofeng</p>
+      <p>点击二维码查看原图，手机可长按保存。</p>
+    </div>
+    <a href="wechat.jpg" aria-label="查看微信二维码原图">
+      <img src="wechat.jpg" alt="xiaofeng 的微信好友二维码" width="888" height="1131" loading="lazy" />
+    </a>
+  </section>
   <footer>by <a href="https://xiaozhuangping-cpu.github.io/">小庄 Studio</a> · React · react-admin · Supabase · GitHub Pages · AI 辅助生成</footer>
 </main>
 </body>
