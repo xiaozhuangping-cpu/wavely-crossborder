@@ -42,7 +42,7 @@ import GavelOutlinedIcon from '@mui/icons-material/GavelOutlined';
 const AssistantPanel = lazy(() => import('./ai/AssistantPanel'));
 
 export const ordersUrl = (filter = {}) => `/orders?filter=${encodeURIComponent(JSON.stringify(filter))}`;
-const ordersOf = (filter) => `/purchase_orders?filter=${encodeURIComponent(JSON.stringify(filter))}`;
+const ordersOf = (filter = {}) => `/purchase_orders?filter=${encodeURIComponent(JSON.stringify(filter))}`;
 
 const useCount = (resource, filter) => {
   const { total } = useGetList(resource, { filter, pagination: { page: 1, perPage: 1 }, sort: { field: 'id', order: 'ASC' } });
@@ -233,10 +233,11 @@ const Sidebar = ({ collapsed, onNavigate }) => {
   const purchasing = [
     { to: '/v_replenishment', icon: <ShoppingCartCheckoutIcon />, label: '补货建议', count: toReplenish, bold: toReplenish > 0 },
     { to: ordersOf({ status: 'approval' }), icon: <GavelOutlinedIcon />, label: '待审批', count: toApprove, bold: role === 'owner' && toApprove > 0,
-      match: (p, s) => p.startsWith('/purchase_orders') && s.includes('approval') },
-    { to: '/purchase_orders', icon: <ReceiptOutlinedIcon />, label: '采购单', count: openPOs, match: (p, s) => p.startsWith('/purchase_orders') && !s.includes('approval') },
+      match: (p) => p.startsWith('/purchase_orders') && f.status === 'approval' },
+    // 显式传空筛选，避免 react-admin 从列表存储中恢复上次的「待审批」筛选。
+    { to: ordersOf(), icon: <ReceiptOutlinedIcon />, label: '采购单', count: openPOs, match: (p) => p.startsWith('/purchase_orders') && f.status !== 'approval' },
     { to: '/suppliers', icon: <FactoryOutlinedIcon />, label: '供应商' },
-  ].map((x) => ({ ...x, active: x.match ? x.match(pathname, decodeURIComponent(search)) : pathname.startsWith(x.to) }));
+  ].map((x) => ({ ...x, active: x.match ? x.match(pathname) : pathname.startsWith(x.to) }));
 
   return (
     <Box component="nav" sx={{ width: collapsed ? 72 : 256, flexShrink: 0, overflowY: 'auto', overflowX: 'hidden', pb: 2, transition: 'width .2s' }}>
