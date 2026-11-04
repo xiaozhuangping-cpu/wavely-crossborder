@@ -7,6 +7,7 @@ import { useStore, activeSkus, optionLabel } from '../store';
 import { productTitle, productName, productDesc, productBullets } from '../i18n';
 import { ProductArt, AddButton, ProductCard, Perks } from '../components/ui';
 import { ImageZoom, Thumbs } from '../components/ImageZoom';
+import { AutoVideo, videoOf } from '../components/ProductVideo';
 
 // ---------- 规格选择 ----------
 const SEP = ' / ';
@@ -80,6 +81,7 @@ export const Product = () => {
   // ?sku= 预选规格（ERP 里点「在独立站查看」会带上）
   const [skuId, setSkuId] = useState(null);
   const [hoverSrc, setHoverSrc] = useState(null);   // 悬停缩略图时临时预览
+  const [playing, setPlaying] = useState(false);    // 主图位置播放场景短片
   useEffect(() => {
     if (!skus.length) return;
     const fromUrl = Number(params.get('sku'));
@@ -91,7 +93,8 @@ export const Product = () => {
   const sku = skus.find((k) => k.id === skuId) ?? skus[0];
   const bullets = productBullets(p, lang);
   const related = products.filter((x) => x.category === p.category && x.id !== p.id).slice(0, 4);
-  const pick = (k) => { setSkuId(k.id); setParams({ sku: String(k.id) }, { replace: true }); };
+  const pick = (k) => { setPlaying(false); setSkuId(k.id); setParams({ sku: String(k.id) }, { replace: true }); };
+  const film = videoOf(p);
   // 图集：各 SKU 的不同图片（颜色规格有独立图），没有则只有商品主图
   const mainSrc = sku?.image_url || p.image_url;
   const gallery = [];
@@ -99,6 +102,8 @@ export const Product = () => {
     const src = k.image_url || p.image_url;
     if (src && !gallery.some((g) => g.src === src)) gallery.push({ src, sku: k, label: optionLabel(k.option_value, lang) });
   }
+  // 场景短片排在图集第二位（主图之后）
+  if (film) gallery.splice(1, 0, { src: film.poster, video: true, label: tr.watchVideo });
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', px: 2, pt: 3 }}>
@@ -108,10 +113,19 @@ export const Product = () => {
           {mainSrc ? (
             <Box sx={{ display: 'flex', flexDirection: { xs: 'column-reverse', md: 'row' }, gap: 1.5, alignItems: 'flex-start' }} onMouseLeave={() => setHoverSrc(null)}>
               {gallery.length > 1 && (
-                <Thumbs items={gallery} activeSrc={hoverSrc ?? mainSrc} onHover={(it) => setHoverSrc(it.src)}
-                  onPick={(it) => { setHoverSrc(null); if (it.sku) pick(it.sku); }} />
+                <Thumbs items={gallery} activeSrc={hoverSrc ?? (playing ? film?.poster : mainSrc)} onHover={(it) => setHoverSrc(it.src)}
+                  onPick={(it) => { setHoverSrc(null); if (it.video) setPlaying(true); else if (it.sku) pick(it.sku); else setPlaying(false); }} />
               )}
-              <Box sx={{ flex: 1, minWidth: 0, width: '100%' }}><ImageZoom src={hoverSrc ?? mainSrc} alt={productName(p, lang)} /></Box>
+              <Box sx={{ flex: 1, minWidth: 0, width: '100%' }}>
+                {playing && !hoverSrc && film
+                  ? <Box sx={{ position: 'relative', aspectRatio: '1 / 1', borderRadius: 5, overflow: 'hidden', display: 'grid', alignItems: 'center', bgcolor: '#111' }}>
+                      {/* 16:9 短片放进方形主图位：用封面模糊放大做背景，避免黑边 */}
+                      <Box component="img" src={film.poster} alt="" aria-hidden
+                        sx={{ position: 'absolute', inset: -40, width: 'calc(100% + 80px)', height: 'calc(100% + 80px)', objectFit: 'cover', filter: 'blur(28px) brightness(.85)' }} />
+                      <AutoVideo src={film.src} poster={film.poster} controls sx={{ position: 'relative', bgcolor: 'transparent', boxShadow: '0 12px 40px rgba(0,0,0,.35)' }} />
+                    </Box>
+                  : <ImageZoom src={hoverSrc ?? mainSrc} alt={productName(p, lang)} />}
+              </Box>
             </Box>
           ) : <ProductArt p={p} size="lg" sx={{ borderRadius: 5 }} />}
         </Grid>

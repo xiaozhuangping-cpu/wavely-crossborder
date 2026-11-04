@@ -4,6 +4,7 @@
 import { useRef, useState } from 'react';
 import { Box, Dialog, IconButton, Typography, useMediaQuery } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import { useStore } from '../store';
 
@@ -91,9 +92,16 @@ export const Thumbs = ({ items, activeSrc, onHover, onPick }) => (
     scrollbarWidth: 'thin' }}>
     {items.map((it) => (
       <Box key={it.src} component="button" type="button" onMouseEnter={() => onHover?.(it)} onClick={() => onPick?.(it)} aria-label={it.label}
-        sx={{ width: 56, height: 56, p: 0.5, flexShrink: 0, bgcolor: '#fff', borderRadius: 2, cursor: 'pointer',
+        sx={{ position: 'relative', width: 56, height: 56, p: 0.5, flexShrink: 0, bgcolor: '#fff', borderRadius: 2, cursor: 'pointer',
           border: 0, boxShadow: it.src === activeSrc ? '0 0 0 2px #0e7490' : 'none' }}>
-        <Box component="img" src={it.src} alt="" loading="lazy" sx={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
+        <Box component="img" src={it.src} alt="" loading="lazy" sx={{ width: '100%', height: '100%', objectFit: it.video ? 'cover' : 'contain', display: 'block', borderRadius: it.video ? 1.5 : 0 }} />
+        {it.video && (
+          <Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', pointerEvents: 'none' }}>
+            <Box sx={{ width: 26, height: 26, borderRadius: '50%', bgcolor: 'rgba(0,0,0,.55)', color: '#fff', display: 'grid', placeItems: 'center' }}>
+              <PlayArrowRoundedIcon sx={{ fontSize: 20 }} />
+            </Box>
+          </Box>
+        )}
       </Box>
     ))}
   </Box>
