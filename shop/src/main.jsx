@@ -13,4 +13,9 @@ window.addEventListener('vite:preloadError', (e) => {
   location.reload();
 });
 
+// 旧版用 Hash 路由（shop/#/p/7）：分享出去的旧链接换成正常路径（shop/p/7），搜索引擎才能收录每个商品页
+if (location.hash.startsWith('#/')) {
+  history.replaceState(null, '', import.meta.env.BASE_URL + location.hash.slice(2).replace(/^\//, ''));
+}
+
 ReactDOM.createRoot(document.getElementById('root')).render(<React.StrictMode><App /></React.StrictMode>);

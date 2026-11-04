@@ -9,6 +9,7 @@ export const ERP_URL = 'https://xiaozhuangping-cpu.github.io/wavely-crossborder/
 
 export const CURRENCIES = ['USD', 'EUR', 'GBP', 'JPY', 'SGD', 'MYR'];
 const LANG_CURRENCY = { en: 'USD', de: 'EUR', zh: 'USD', ja: 'JPY', es: 'EUR' };
+const LANGS = Object.keys(LANG_CURRENCY);
 
 const load = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } };
 const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* 隐私模式等情况下忽略 */ } };
@@ -16,8 +17,12 @@ const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } cat
 const Ctx = createContext(null);
 
 export const StoreProvider = ({ children }) => {
-  const [lang, setLang] = useState(() => load('wv.lang', detectLang()));
-  const [currency, setCurrency] = useState(() => load('wv.currency', LANG_CURRENCY[load('wv.lang', detectLang())] ?? 'USD'));
+  // ?lang= 优先（分享指定语言的链接用），其次上次选择，最后按浏览器语言
+  const [lang, setLang] = useState(() => {
+    const q = new URLSearchParams(location.search).get('lang');
+    return LANGS.includes(q) ? q : load('wv.lang', detectLang());
+  });
+  const [currency, setCurrency] = useState(() => load('wv.currency', LANG_CURRENCY[lang] ?? 'USD'));
   const [rates, setRates] = useState({ USD: 1 });
   const [products, setProducts] = useState(null);
   // [{skuId, qty}]；旧版按商品存的购物车直接丢弃

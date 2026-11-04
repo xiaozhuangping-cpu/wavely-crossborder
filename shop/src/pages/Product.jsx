@@ -8,6 +8,7 @@ import { productTitle, productName, productDesc, productBullets } from '../i18n'
 import { ProductArt, AddButton, ProductCard, Perks } from '../components/ui';
 import { ImageZoom, Thumbs } from '../components/ImageZoom';
 import { AutoVideo, videoOf } from '../components/ProductVideo';
+import { applySeo, productMeta } from '../seo';
 
 // ---------- 规格选择 ----------
 const SEP = ' / ';
@@ -78,6 +79,7 @@ export const Product = () => {
   const [params, setParams] = useSearchParams();
   const { products, lang, price, tr } = useStore();
   const p = products?.find((x) => String(x.id) === id);
+  useEffect(() => { if (p) applySeo(productMeta(p, lang)); }, [p, lang]);
   const skus = activeSkus(p);
   // ?sku= 预选规格（ERP 里点「在独立站查看」会带上）
   const [skuId, setSkuId] = useState(null);

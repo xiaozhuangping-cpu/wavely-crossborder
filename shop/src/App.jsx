@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
-import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { ThemeProvider, CssBaseline, Box } from '@mui/material';
 import { theme } from './theme';
+import { applySeo, SITE } from './seo';
 import { StoreProvider } from './store';
 import { Header, CartDrawer, Footer } from './components/Layout';
 import { ChatWidget } from './components/ChatLauncher';
@@ -13,6 +14,8 @@ import { Track } from './pages/Track';
 const ScrollTop = () => {
   const { pathname } = useLocation();
   useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  // 商品页自己设置 SEO；其他页面恢复默认标题 / 描述，canonical 指向当前路径
+  useEffect(() => { if (!pathname.startsWith('/p/')) applySeo({ url: SITE + pathname.replace(/^\//, '') }); }, [pathname]);
   return null;
 };
 
@@ -20,7 +23,7 @@ export const App = () => (
   <ThemeProvider theme={theme}>
     <CssBaseline />
     <StoreProvider>
-      <HashRouter>
+      <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
         <ScrollTop />
         <Box sx={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
           <Header />
@@ -38,7 +41,7 @@ export const App = () => (
         </Box>
         <CartDrawer />
         <ChatWidget />
-      </HashRouter>
+      </BrowserRouter>
     </StoreProvider>
   </ThemeProvider>
 );
