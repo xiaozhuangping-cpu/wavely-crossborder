@@ -15,7 +15,28 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # 数据库测试：在空的 Postgres 17（与线上一致）里跑全部迁移 + supabase/tests，失败则不发布
+  db-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install psql
+        run: command -v psql || (sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client)
+      - name: Run migrations and tests
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+        run: ./supabase/tests/run.sh
+
   build:
+    needs: db-test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
