@@ -4,12 +4,12 @@ import { Box, Typography, Button, Grid, Stack, Chip, Skeleton } from '@mui/mater
 import { useStore, priceFrom } from '../store';
 import { productName } from '../i18n';
 import { ProductCard, Perks } from '../components/ui';
-import { AutoVideo, videoOf, FILM_SKUS } from '../components/ProductVideo';
+import { AutoVideo, videoOf } from '../components/ProductVideo';
 
 // 场景短片：点击进入商品页
 const Films = () => {
   const { products, tr, lang, price } = useStore();
-  const items = FILM_SKUS.map((sku) => products?.find((p) => p.sku === sku)).filter(Boolean);
+  const items = (products ?? []).filter((p) => p.video_url).slice(0, 6);
   if (!items.length) return null;
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', px: 2, pt: { xs: 5, md: 7 } }}>

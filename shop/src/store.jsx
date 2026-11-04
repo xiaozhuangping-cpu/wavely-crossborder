@@ -34,7 +34,7 @@ export const StoreProvider = ({ children }) => {
     supabase.from('exchange_rates').select('currency,rate_to_usd').then(({ data }) => {
       if (data) setRates(Object.fromEntries(data.map((r) => [r.currency, Number(r.rate_to_usd)])));
     });
-    supabase.from('products').select('id,sku,name,description,category,price_usd,weight_g,listing,image_url,option_name,skus(id,sku,option_value,price_usd,image_url,status,sort)').eq('status', 'active').order('id').then(({ data, error }) => {
+    supabase.from('products').select('id,sku,name,description,category,price_usd,weight_g,listing,image_url,option_name,video_url,video_poster,skus(id,sku,option_value,price_usd,image_url,status,sort)').eq('status', 'active').order('id').then(({ data, error }) => {
       setProducts(error ? [] : data);
     });
   }, []);
