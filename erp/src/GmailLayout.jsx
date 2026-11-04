@@ -23,6 +23,9 @@ import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
 import CurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange';
 import CalculateOutlinedIcon from '@mui/icons-material/CalculateOutlined';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
+import ShoppingCartCheckoutIcon from '@mui/icons-material/ShoppingCartCheckout';
+import ReceiptOutlinedIcon from '@mui/icons-material/ReceiptOutlined';
+import FactoryOutlinedIcon from '@mui/icons-material/FactoryOutlined';
 import LabelIcon from '@mui/icons-material/Label';
 import LogoutIcon from '@mui/icons-material/Logout';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
@@ -192,6 +195,8 @@ const Sidebar = ({ collapsed, onNavigate }) => {
   const transit = useCount('orders', { 'status@in': '(shipped,in_transit)' });
   const lowStock = useCount('v_inventory', { low_stock: true });
   const collected = useCount('import_drafts', { status: 'new' });
+  const toReplenish = useCount('v_replenishment', {});
+  const openPOs = useCount('purchase_orders', { 'status@in': '(draft,placed,partial)' });
   const { data: shops = [] } = useGetList('shops', { pagination: { page: 1, perPage: 20 }, sort: { field: 'id', order: 'ASC' } });
 
   const isOrders = (pred) => onOrders && pred(f);
@@ -217,6 +222,11 @@ const Sidebar = ({ collapsed, onNavigate }) => {
     { to: '/exchange_rates', icon: <CurrencyExchangeIcon />, label: '汇率' },
     { to: '/profit', icon: <CalculateOutlinedIcon />, label: '利润计算器' },
   ].map((x) => ({ ...x, active: pathname.startsWith(x.to) || (x.to === '/v_inventory' && pathname.startsWith('/inventory')) || (x.to === '/v_skus' && pathname.startsWith('/skus')) }));
+  const purchasing = [
+    { to: '/v_replenishment', icon: <ShoppingCartCheckoutIcon />, label: '补货建议', count: toReplenish, bold: toReplenish > 0 },
+    { to: '/purchase_orders', icon: <ReceiptOutlinedIcon />, label: '采购单', count: openPOs },
+    { to: '/suppliers', icon: <FactoryOutlinedIcon />, label: '供应商' },
+  ].map((x) => ({ ...x, active: pathname.startsWith(x.to) }));
 
   return (
     <Box component="nav" sx={{ width: collapsed ? 72 : 256, flexShrink: 0, overflowY: 'auto', overflowX: 'hidden', pb: 2, transition: 'width .2s' }}>
@@ -235,6 +245,8 @@ const Sidebar = ({ collapsed, onNavigate }) => {
       {items.map((x) => <NavItem key={x.label} {...x} collapsed={collapsed} onClick={onNavigate} />)}
       <SectionTitle collapsed={collapsed}>管理</SectionTitle>
       {manage.map((x) => <NavItem key={x.label} {...x} collapsed={collapsed} onClick={onNavigate} />)}
+      <SectionTitle collapsed={collapsed}>采购</SectionTitle>
+      {purchasing.map((x) => <NavItem key={x.label} {...x} collapsed={collapsed} onClick={onNavigate} />)}
       <SectionTitle collapsed={collapsed}>店铺标签</SectionTitle>
       {shops.map((s) => (
         <NavItem key={s.id} to={ordersUrl({ shop_id: s.id })} label={s.name} collapsed={collapsed} onClick={onNavigate}

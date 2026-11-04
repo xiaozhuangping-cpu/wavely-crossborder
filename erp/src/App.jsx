@@ -24,6 +24,7 @@ import { OrderList, OrderShow, OrderEdit } from './resources/orders';
 import { ProductList, ProductEdit, ProductCreate } from './resources/products';
 import { SkuList, SkuEdit, SkuCreate } from './resources/skus';
 import { CollectBox } from './collect/CollectBox';
+import { ReplenishmentList, PurchaseOrderList, PurchaseOrderShow, SupplierList, SupplierEdit, SupplierCreate } from './resources/purchasing';
 import { InventoryList, InventoryEdit, ShopList, ShopEdit, ShopCreate, CustomerList, ShipmentList, RateList, RateEdit } from './resources/others';
 
 const MyLayout = ({ children }) => <GmailLayout>{children}</GmailLayout>;
@@ -52,6 +53,10 @@ export const App = () => (
     <Resource name="shops" list={ShopList} edit={ShopEdit} create={ShopCreate} icon={StorefrontIcon} recordRepresentation="name" />
     <Resource name="customers" list={CustomerList} icon={PeopleIcon} recordRepresentation="name" />
     <Resource name="import_drafts" list={CollectBox} icon={AddShoppingCartIcon} options={{ label: '1688 采集' }} />
+    <Resource name="v_replenishment" list={ReplenishmentList} options={{ label: '补货建议' }} />
+    <Resource name="purchase_orders" list={PurchaseOrderList} show={PurchaseOrderShow} options={{ label: '采购单' }} recordRepresentation="po_no" />
+    <Resource name="purchase_order_items" />
+    <Resource name="suppliers" list={SupplierList} edit={SupplierEdit} create={SupplierCreate} options={{ label: '供应商' }} recordRepresentation="name" />
     <Resource name="exchange_rates" list={RateList} edit={RateEdit} icon={CurrencyExchangeIcon} />
     <Resource name="order_items" />
     <Resource name="tracking_events" />

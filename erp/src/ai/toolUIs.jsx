@@ -103,6 +103,26 @@ const LowStock = ({ result }) => {
   );
 };
 
+const Replenishment = ({ result }) => {
+  if (result?.error) return <ErrorNote result={result} />;
+  const rows = result?.rows ?? [];
+  return (
+    <Card title={`补货建议 · ${rows.length} 项`} footer={<Link to="/v_replenishment" style={{ fontSize: 13 }}>去补货建议生成采购单 →</Link>}>
+      <Stack divider={<Divider flexItem />} spacing={0.75}>
+        {rows.slice(0, 8).map((r) => (
+          <Stack key={r.id} direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', gap: 1 }}>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography noWrap sx={{ fontSize: 13, fontWeight: 500 }}>{r.product_name} · {r.option_label}</Typography>
+              <Typography noWrap sx={{ fontSize: 12, color: 'text.secondary' }}>{r.warehouse_name} · 在库 {r.on_hand}/{r.safety_qty}{r.in_transit ? ` · 在途 ${r.in_transit}` : ''} · 周期 {r.lead_days} 天</Typography>
+            </Box>
+            <Chip size="small" color="primary" variant="outlined" label={`补 ${r.suggested_qty}`} />
+          </Stack>
+        ))}
+      </Stack>
+    </Card>
+  );
+};
+
 const OrderLines = ({ rows }) => (
   <Stack divider={<Divider flexItem />} spacing={0.75}>
     {rows.map((o) => (
@@ -211,13 +231,14 @@ const ProposeListing = ({ result }) => {
   );
 };
 
-const NAMES = { sales_summary: '查询销售汇总', top_products: '查询畅销商品', low_stock: '查询低库存', find_orders: '查询订单', get_product: '查找商品', propose_ship_orders: '准备发货', propose_listing: '生成 Listing' };
+const NAMES = { sales_summary: '查询销售汇总', top_products: '查询畅销商品', low_stock: '查询低库存', replenishment: '查询补货建议', find_orders: '查询订单', get_product: '查找商品', propose_ship_orders: '准备发货', propose_listing: '生成 Listing' };
 export const ToolFallback = ({ toolName }) => <Chip size="small" variant="outlined" label={`已调用：${NAMES[toolName] ?? toolName}`} sx={{ my: 0.5 }} />;
 
 export const TOOL_UIS = {
   sales_summary: SalesSummary,
   top_products: TopProducts,
   low_stock: LowStock,
+  replenishment: Replenishment,
   find_orders: FindOrders,
   get_product: GetProduct,
   propose_ship_orders: ProposeShip,

@@ -12,8 +12,9 @@ const systemPrompt = () => `你是「Wavely 跨境 ERP」里的 AI 运营助手�
 1. 涉及数字、订单、库存的问题，必须先调用工具查询，绝不编造数据。时间范围不明确时默认最近 30 天，并在回答里说明。
 2. 写操作（发货、保存 Listing）只能调用 propose_* 工具生成提案，界面会弹出确认卡片，由用户点击确认后执行。不要声称已经完成。
 3. 写多语言 Listing 时，先用 get_product 获取商品信息，再按目标站点语言写：标题 ≤ 200 字符、5 条要点、一段描述，符合当地电商平台的表达习惯，不夸大功效。
-4. 工具返回的数据界面会自动画成图表/表格/确认卡片，回答里不要重复罗列全部数字，也不要把 Listing 全文再写一遍，给出 2-4 句结论和建议即可。
-5. 用简体中文回答，简洁专业，可以用 Markdown。`;
+4. 补货问题先调用 replenishment 工具；建议用户在「采购 → 补货建议」勾选后一键生成采购单。
+5. 工具返回的数据界面会自动画成图表/表格/确认卡片，回答里不要重复罗列全部数字，也不要把 Listing 全文再写一遍，给出 2-4 句结论和建议即可。
+6. 用简体中文回答，简洁专业，可以用 Markdown。`;
 
 const tools = [
   { type: 'function', function: {
@@ -32,6 +33,9 @@ const tools = [
     }, required: ['start_date', 'end_date'] } } },
   { type: 'function', function: {
     name: 'low_stock', description: '查询低于安全库存的商品',
+    parameters: { type: 'object', properties: { warehouse_kind: { type: 'string', enum: ['domestic', 'overseas', 'fba'] } } } } },
+  { type: 'function', function: {
+    name: 'replenishment', description: '补货建议（按 SKU × 仓库）：在库 + 在途低于安全库存的行，含近 30 天销量、补货周期（供应商交期 + 头程）、建议补货量（已按起批量取整）、供应商。用户问"该补哪些货/补多少/在途"时使用',
     parameters: { type: 'object', properties: { warehouse_kind: { type: 'string', enum: ['domestic', 'overseas', 'fba'] } } } } },
   { type: 'function', function: {
     name: 'find_orders', description: '查询订单列表（最新在前）',
@@ -68,6 +72,12 @@ async function runTool(db: SupabaseClient, name: string, a: Record<string, any>)
       return { rows: must(await db.rpc('ai_top_products', { p_start: a.start_date, p_end: a.end_date, p_country: a.country ?? null, p_platform: a.platform ?? null, p_limit: a.limit ?? 5 })), ...a };
     case 'low_stock': {
       let q = db.from('v_inventory').select('id,sku,product_name,warehouse_name,warehouse_kind,qty,safety_qty').eq('low_stock', true).order('qty').limit(20);
+      if (a.warehouse_kind) q = q.eq('warehouse_kind', a.warehouse_kind);
+      return { rows: must(await q) };
+    }
+    case 'replenishment': {
+      let q = db.from('v_replenishment').select('id,sku,product_name,option_label,warehouse_name,warehouse_kind,on_hand,safety_qty,in_transit,sales_30d,lead_days,suggested_qty,supplier_name,cost_cny')
+        .order('sales_30d', { ascending: false }).limit(20);
       if (a.warehouse_kind) q = q.eq('warehouse_kind', a.warehouse_kind);
       return { rows: must(await q) };
     }

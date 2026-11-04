@@ -22,6 +22,14 @@
 - 商品「视频」标签：上传到 Supabase Storage，浏览器内自动截取封面
 - **✦ AI 运营助手**：问销售数据、找补货商品、写多语言 Listing、批量发货。只读工具在服务端以访客身份执行（遵守 RLS），写操作只生成「提案」，用户点确认后才执行
 
+### 📦 采购闭环与补货
+
+- **补货建议（按 SKU × 仓库）**：在库 + 在途低于安全库存时触发，建议量 = 安全库存 × 2 + 日均销量 × 补货周期（供应商交期 + 头程：海外仓 25 天、FBA 30 天）− 在库 − 在途，按起批量取整
+- 勾选建议一键按「供应商 × 收货仓」拆单生成采购单；采购单 草稿 → 已下单 → 部分到货 → 已到货（或取消），按明细分批收货，事务内入库
+- 供应商管理（交期、联系人）；1688 导入的商品自动按供应商名关联供应商并记录起批量
+- AI 运营助手新增「补货建议」工具：直接问"FBA 仓该补哪些货"
+- 设计参考开源项目 [ittim-erp](https://github.com/salgee/ittim-erp)（采购单主表 + 明细、在库 + 在途 < 需求的补货预警）与 [InvenTree](https://github.com/inventree/InvenTree)（采购单状态、按明细分批收货），按本项目的 Supabase 架构重新实现
+
 ### 🧩 1688 采集插件 → 采集箱
 
 ![ERP 采集箱](docs/screenshots/erp-1688-collect.jpg)
@@ -77,7 +85,8 @@ docs/screenshots/       README 截图
 | 访客登录 | 匿名登录（Anonymous Sign-in），无需注册 |
 | 权限 | RLS：未登录只能读在售商品 / 店铺 / 汇率；登录访客可读写 ERP 数据 |
 | 独立站下单 | `place_order()`（security definer，校验数量与收货信息） |
-| 采集与导入 | `collect_offer()` 去重写入采集箱；`import_draft()` 事务内生成 SPU + SKU |
+| 采集与导入 | `collect_offer()` 去重写入采集箱；`import_draft()` 事务内生成 SPU + SKU 并关联供应商 |
+| 采购与补货 | `create / place / receive / cancel_purchase_order()`；视图 `v_replenishment` 计算补货建议 |
 | 媒体存储 | 公开桶 `product-media`（≤ 20 MB，仅视频 / 图片） |
 | 物流推进 | `advance_shipments()`，pg_cron 每小时执行 |
 | 每日重置 | `reset_demo()`，pg_cron 每天北京时间 03:00 执行（含采集箱与演示视频） |
