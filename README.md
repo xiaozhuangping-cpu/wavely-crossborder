@@ -7,6 +7,10 @@
 
 > **English** · An open-source, end-to-end cross-border e-commerce demo: an ERP (orders, SKUs, multi-warehouse inventory, replenishment & purchasing with approval workflow, database-enforced RBAC, audit log), a 5-language storefront with an AI shopping assistant, a Flutter warehouse app (scan to receive / pick & ship), a Chrome extension that collects products from 1688, AI product localization and AI-generated product films. Built with React, Flutter and Supabase (Postgres + RLS + Edge Functions), tested in CI. [Try it live →](https://xiaozhuangping-cpu.github.io/wavely-crossborder/)
 
+[![Wavely 宣传片：一分钟看完整条链路（点击播放）](site/promo/poster.jpg)](https://xiaozhuangping-cpu.github.io/wavely-crossborder/promo/wavely-promo.mp4)
+
+▶ **[一分钟宣传片](https://xiaozhuangping-cpu.github.io/wavely-crossborder/promo/wavely-promo.mp4)**：1688 采集 → AI 本地化 → 五语言上架 → 下单 → 扫码发货 → 补货审批。整支片子由代码逐帧渲染（Canvas + 合成配乐 + AI 配音），源码与一键构建脚本在 [`wavely-promo/`](wavely-promo/)。
+
 虚构品牌「Wavely 海浪优选」的跨境电商全链路演示：**ERP 后台 + 多语言独立站 + 仓库 App + 1688 采集插件 + AI 助手 + AI 场景短片**，后端全部跑在 Supabase 免费版上，数据每天自动重置。
 
 > 本项目的代码、演示数据与界面设计均为 AI 辅助生成（使用 Claude Code），由作者策划与发布。

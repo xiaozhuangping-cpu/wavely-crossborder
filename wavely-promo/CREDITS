@@ -1,0 +1,20 @@
+Wavely 宣传片 · 第三方素材与许可
+
+画面
+- 全部界面、动效与标志均为代码原创绘制（Canvas 2D）。
+- 绘图引擎 engine.js 改自 Lemo-Opuscar「暗色科技发布（dark-keynote）」风格引擎（github.com/lemomo-ai/lemo-opuscar）。
+- 商品图（shop/public/products）与商品场景短片 WV-ELE-001（Google Flow · Veo 3.1 生成）为本项目自有素材。
+- 片中品牌、店铺、商品、订单、供应商与数字均为 Wavely 演示数据（虚构）；平台名称（1688、Amazon、Shopee、TikTok Shop）仅以文字说明渠道，未使用其标志。
+
+字体（SIL Open Font License 1.1，见 fonts/OFL-*.txt）
+- Inter、Inter Tight — The Inter Project Authors（github.com/rsms/inter）
+- JetBrains Mono — The JetBrains Mono Project Authors
+- Noto Sans SC（仅片中用到的字的子集）— Google / Adobe（经 Google Fonts）
+
+声音
+- 旁白：Microsoft Azure 神经网络语音 zh-CN-YunxiNeural，经 edge-tts 合成。
+- 配乐：原创，numpy 合成（music/score.py），未使用采样。
+- 拟音：程序合成（mix.py，基于 Lemo-Opuscar core/audio/sfx.py）。
+
+工具
+- Lemo-Opuscar 渲染与混音工具（core/render、core/tts、core/audio）、Playwright / Chromium、ffmpeg、faster-whisper（语音校对）。

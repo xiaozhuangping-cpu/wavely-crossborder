@@ -1,0 +1,11 @@
+# 可由 build.sh / tools/prep.sh 重新生成
+out/
+stills/
+assets/
+fonts/*.ttf
+fonts/*.woff2
+fonts/NotoSC.chars
+voices/.cache/
+events.json
+*.mp4
+music/score.wav
