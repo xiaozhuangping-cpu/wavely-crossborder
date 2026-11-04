@@ -1,0 +1,30 @@
+name: 问题反馈 / Bug report
+description: 某个功能不正常
+labels: [bug]
+body:
+  - type: dropdown
+    id: module
+    attributes:
+      label: 模块
+      options: [ERP 后台, 多语言独立站, 仓库 App, 1688 采集插件, AI 助手, 数据库 / 边缘函数, 其他]
+    validations: { required: true }
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      placeholder: "1. 打开…\n2. 点击…\n3. 看到…"
+    validations: { required: true }
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望结果与实际结果
+    validations: { required: true }
+  - type: input
+    id: env
+    attributes:
+      label: 浏览器 / 设备
+      placeholder: Chrome 140 · macOS / Android 15
+  - type: textarea
+    id: extra
+    attributes:
+      label: 截图或报错信息

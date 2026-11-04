@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 在线演示
+    url: https://xiaozhuangping-cpu.github.io/wavely-crossborder/
+    about: 先在演示站体验一下，数据每天自动重置
+  - name: 合作咨询
+    url: https://xiaozhuangping-cpu.github.io/#contact
+    about: 定制开发、二次开发请走这里

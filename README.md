@@ -1,5 +1,12 @@
 # Wavely 跨境电商演示
 
+[![Deploy](https://github.com/xiaozhuangping-cpu/wavely-crossborder/actions/workflows/deploy.yml/badge.svg)](https://github.com/xiaozhuangping-cpu/wavely-crossborder/actions/workflows/deploy.yml)
+[![App APK](https://github.com/xiaozhuangping-cpu/wavely-crossborder/actions/workflows/app-release.yml/badge.svg)](https://github.com/xiaozhuangping-cpu/wavely-crossborder/releases/tag/app-latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-0e7490.svg)](LICENSE)
+[![Live demo](https://img.shields.io/badge/demo-online-16a34a.svg)](https://xiaozhuangping-cpu.github.io/wavely-crossborder/)
+
+> **English** · An open-source, end-to-end cross-border e-commerce demo: an ERP (orders, SKUs, multi-warehouse inventory, replenishment & purchasing with approval workflow, database-enforced RBAC, audit log), a 5-language storefront with an AI shopping assistant, a Flutter warehouse app (scan to receive / pick & ship), a Chrome extension that collects products from 1688, AI product localization and AI-generated product films. Built with React, Flutter and Supabase (Postgres + RLS + Edge Functions), tested in CI. [Try it live →](https://xiaozhuangping-cpu.github.io/wavely-crossborder/)
+
 虚构品牌「Wavely 海浪优选」的跨境电商全链路演示：**ERP 后台 + 多语言独立站 + 仓库 App + 1688 采集插件 + AI 助手 + AI 场景短片**，后端全部跑在 Supabase 免费版上，数据每天自动重置。
 
 > 本项目的代码、演示数据与界面设计均为 AI 辅助生成（使用 Claude Code），由作者策划与发布。
@@ -131,6 +138,23 @@ DATABASE_URL=postgres://postgres@127.0.0.1:5432/postgres ./supabase/tests/run.sh
 
 脚本会在一个空库里建好 Supabase 所需的最小环境（角色、auth / storage / cron 替身），按顺序执行全部迁移，再运行 `supabase/tests/*.sql`。CI 中每次推送都会用 Postgres 容器跑一遍。
 
+## 自部署（Fork 后用自己的后端）
+
+1. **Supabase**：新建项目，开启 Authentication → Anonymous Sign-ins；安装 [Supabase CLI](https://supabase.com/docs/guides/cli) 后 `supabase link --project-ref <你的 ref>`
+2. **数据库**：`supabase db push --remote`（执行全部迁移并写入演示数据）；在 Database → Extensions 开启 `pg_cron`，迁移会注册物流推进与每日重置任务
+3. **AI**：`supabase secrets set DEEPSEEK_API_KEY=...`，然后 `supabase functions deploy ai-assistant shop-assistant --no-verify-jwt --remote`
+4. **前端配置**：把下表里的 Supabase 地址 / publishable key 与站点地址换成你自己的
+5. **GitHub Pages**：仓库 Settings → Pages → Source 选 GitHub Actions，推送 `main` 即自动测试并发布
+
+| 需要修改的地方 | 内容 |
+|---|---|
+| `erp/.env`、`shop/.env` | `VITE_SUPABASE_URL`、`VITE_SUPABASE_KEY`（publishable key） |
+| `extension/config.js`、`app/lib/config.dart` | 同上，以及 ERP 地址 |
+| `extension/manifest.json` | `externally_connectable` 允许的 ERP 域名；如需固定扩展 ID 请换成自己的 `key` |
+| `erp/vite.config.js`、`shop/vite.config.js`、`.github/workflows/deploy.yml` | `base` 路径（仓库名不同时） |
+| `erp/src/constants.js`、`shop/src/store.jsx`、各 `index.html` | 独立站 / ERP 互链地址与分享卡片地址 |
+| `supabase/migrations/*`（演示数据） | 商品图片与演示视频的站点地址 |
+
 ## 部署
 
 推送到 `main` 后，GitHub Actions 先跑数据库测试，再构建并发布到 GitHub Pages。
@@ -144,3 +168,9 @@ supabase db push --remote
 ```
 
 > 若本机网络无法直连数据库（直连地址仅 IPv6），可改用走管理接口的 `supabase db query --remote -f <迁移文件>` 执行迁移，并把版本号写入 `supabase_migrations.schema_migrations`。
+
+## 开源协议
+
+代码以 [MIT](LICENSE) 协议开源，欢迎 Fork、二次开发与商用。演示数据（虚构品牌、商品、订单）、AI 生成的商品图与场景短片仅作演示用途。
+
+欢迎参与贡献，见 [CONTRIBUTING.md](CONTRIBUTING.md)；安全问题请按 [SECURITY.md](SECURITY.md) 私下报告。
