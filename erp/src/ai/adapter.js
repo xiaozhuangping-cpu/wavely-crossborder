@@ -16,6 +16,15 @@ export async function translateNames(items) {
   return Object.fromEntries((d.items ?? []).map(({ id, ...names }) => [id, names]));
 }
 
+/** 整个商品多语言（名称、规格、描述），items 见 collect/localize.js；返回 {id: 结果} */
+export async function translateProducts(items) {
+  const res = await fetch(FN_URL, { method: 'POST', headers: await authHeaders(), body: JSON.stringify({ action: 'translate_products', items, llm: llmPayload() }) })
+    .catch(() => { throw new Error('网络异常，请稍后再试'); });
+  const d = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(d.error ?? `HTTP ${res.status}`);
+  return Object.fromEntries((d.items ?? []).map((x) => [x.id, x]));
+}
+
 /** 经边缘函数拉取自定义服务的模型列表（供设置对话框使用） */
 export async function fetchModels(llm) {
   const res = await fetch(FN_URL, { method: 'POST', headers: await authHeaders(), body: JSON.stringify({ action: 'models', llm }) })

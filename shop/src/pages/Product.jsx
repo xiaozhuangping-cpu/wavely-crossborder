@@ -16,6 +16,7 @@ const chipSx = { height: 'auto', minHeight: 38, maxWidth: '100%', px: 0.5, fontS
   '& .MuiChip-label': { whiteSpace: 'normal', py: 0.75, lineHeight: 1.35 } };
 
 const OptionChips = ({ values, selected, onSelect, isAvailable = () => true }) => {
+  const { tr } = useStore();
   const [all, setAll] = useState(false);
   const idx = values.indexOf(selected);
   const shown = all || values.length <= COLLAPSE_AT || idx >= COLLAPSE_AT ? values : values.slice(0, COLLAPSE_AT);
@@ -28,7 +29,7 @@ const OptionChips = ({ values, selected, onSelect, isAvailable = () => true }) =
       ))}
       {values.length > COLLAPSE_AT && idx < COLLAPSE_AT && (
         <Button size="small" onClick={() => setAll((x) => !x)} sx={{ borderRadius: 2, minHeight: 38 }}>
-          {all ? '收起 / Less' : `+${values.length - COLLAPSE_AT}`}
+          {all ? tr.showLess : `+${values.length - COLLAPSE_AT}`}
         </Button>
       )}
     </Stack>

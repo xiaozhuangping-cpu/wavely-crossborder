@@ -83,12 +83,21 @@ export async function complete(llm: Llm, messages: unknown[], opts: { json?: boo
   return String(d.choices?.[0]?.message?.content ?? '');
 }
 
-/** 从模型输出里取出 JSON（兼容 ```json 代码块、前后多余文字） */
+/** 从模型输出里取出第一个完整的 JSON 对象（兼容 ```json 代码块、前后多余文字、模型重复输出） */
 export function parseJson(text: string): any {
   const t = text.replace(/^```(?:json)?\s*|\s*```$/g, '').trim();
-  try { return JSON.parse(t); } catch { /* 继续尝试截取 */ }
-  const a = t.indexOf('{'), b = t.lastIndexOf('}');
-  if (a >= 0 && b > a) return JSON.parse(t.slice(a, b + 1));
+  try { return JSON.parse(t); } catch { /* 继续按括号配对截取 */ }
+  const a = t.indexOf('{');
+  if (a >= 0) {
+    let depth = 0, inStr = false, esc = false;
+    for (let i = a; i < t.length; i++) {
+      const c = t[i];
+      if (inStr) { if (esc) esc = false; else if (c === '\\') esc = true; else if (c === '"') inStr = false; continue; }
+      if (c === '"') inStr = true;
+      else if (c === '{') depth++;
+      else if (c === '}' && --depth === 0) return JSON.parse(t.slice(a, i + 1));
+    }
+  }
   throw new Error('模型没有返回有效的 JSON / Model returned invalid JSON');
 }
 

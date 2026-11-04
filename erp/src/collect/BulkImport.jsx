@@ -5,12 +5,12 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem, Stack, Typography, LinearProgress, Alert, InputAdornment, Box,
   FormControlLabel, Checkbox,
 } from '@mui/material';
-import { translateNames } from '../ai/adapter';
+import { translateItem, applyTranslation, translateAll } from './localize';
 import { useLlmConfig, llmLabel, isOwnKey } from '../ai/llmConfig';
 import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
 import DeleteSweepOutlinedIcon from '@mui/icons-material/DeleteSweepOutlined';
 import { supabase } from '../supabase';
-import { CATEGORY_CHOICES, STATUS_OPTIONS, draftRows, defaultName, buildPayload, useCnyRate } from './ImportDialog';
+import { CATEGORY_CHOICES, STATUS_OPTIONS, draftRows, defaultName, buildPayload, descOf, useCnyRate } from './ImportDialog';
 
 const BulkImport = () => {
   const { selectedIds, data = [], onUnselectItems } = useListContext();
@@ -32,25 +32,25 @@ const BulkImport = () => {
 
   const start = async () => {
     const state = { stage: 'import', done: 0, total: todo.length, ok: 0, failed: [], warn: '' };
-    // 1) AI 翻译：每 10 个一批；某批失败时这一批退回为清洗后的中文标题，不影响导入
-    const names = {};
+    // 先为每个商品算好规格行，翻译与导入用同一份
+    const plans = todo.map((r) => {
+      const d = r.data ?? {};
+      const rows = draftRows(d, cny, margin / 100);
+      const optionName = (d.props ?? []).map((x) => x.name).join(' / ');
+      return { r, d, rows, optionName, item: translateItem({ id: r.id, title: r.title, optionName, rows, description: descOf(d) }) };
+    });
+    // 1) AI 本地化：商品名、规格、描述；某批失败时这批只有中文，不影响导入
+    let results = {};
     if (translate) {
-      const chunks = [];
-      for (let i = 0; i < todo.length; i += 10) chunks.push(todo.slice(i, i + 10));
-      for (let i = 0; i < chunks.length; i++) {
-        setRun({ ...state, stage: 'translate', done: i, total: chunks.length });
-        try { Object.assign(names, await translateNames(chunks[i].map((r) => ({ id: String(r.id), title: r.title })))); }
-        catch (e) { state.warn = `部分商品名翻译失败，已使用中文标题：${e.message}`; if (/额度|quota/i.test(e.message)) break; }
-      }
+      const out = await translateAll(plans.map((x) => x.item), (i, n) => setRun({ ...state, stage: 'translate', done: i, total: n }));
+      results = out.results;
+      if (out.errors.length) state.warn = `部分商品 AI 翻译失败，只有中文：${out.errors[0]}`;
     }
     // 2) 逐条导入
     setRun({ ...state });
-    for (const r of todo) {
-      const d = r.data ?? {};
-      const rows = draftRows(d, cny, margin / 100);
-      const t = names[String(r.id)] ?? {};
-      const p = buildPayload({ d, rows, zh: t.zh || defaultName(d), category, optionName: (d.props ?? []).map((x) => x.name).join(' / '), image: d.images?.[0], status });
-      for (const l of ['en', 'de', 'ja', 'es']) if (t[l]) p.name[l] = t[l];
+    for (const { r, d, rows, optionName, item } of plans) {
+      const base = buildPayload({ d, rows, zh: defaultName(d), category, optionName, image: d.images?.[0], status });
+      const p = applyTranslation(base, item, results[String(r.id)]);
       const { error } = await supabase.rpc('import_draft', { p_draft: r.id, p });
       if (error) state.failed.push({ title: r.title, msg: error.message }); else state.ok += 1;
       state.done += 1;
@@ -81,10 +81,10 @@ const BulkImport = () => {
             </TextField>
             <Box>
               <FormControlLabel disabled={!!run} control={<Checkbox size="small" checked={translate} onChange={(e) => setTranslate(e.target.checked)} />}
-                label={<Typography sx={{ fontSize: 14 }}>AI 改写商品名（中 / 英 / 德 / 日 / 西）</Typography>} />
+                label={<Typography sx={{ fontSize: 14 }}>AI 本地化（商品名、规格、描述 · 中 / 英 / 德 / 日 / 西）</Typography>} />
               <Typography sx={{ fontSize: 12, color: 'text.secondary', ml: 3.75 }}>
                 {translate
-                  ? `由 ${llmLabel(llm)} 把 1688 标题改写成简洁的多语言商品名，每 10 个商品调用 1 次${isOwnKey(llm) ? '（使用你自己的 API Key）' : `，约消耗 ${Math.ceil(todo.length / 10)} 次 AI 额度`}`
+                  ? `由 ${llmLabel(llm)} 精简 1688 标题并翻译规格与描述，每批最多 5 个商品${isOwnKey(llm) ? '（使用你自己的 API Key）' : `，约消耗 ${Math.max(1, Math.ceil(todo.length / 5))} 次以上 AI 额度`}`
                   : '商品名取 1688 标题前 40 字（去掉【】里的营销词），只有中文'}
               </Typography>
             </Box>
@@ -95,7 +95,7 @@ const BulkImport = () => {
               <Box>
                 <LinearProgress variant="determinate" value={run.total ? (run.done / run.total) * 100 : 100} />
                 <Typography sx={{ fontSize: 13, mt: 0.75 }}>
-                  {run.stage === 'translate' ? `AI 正在改写商品名（第 ${run.done + 1}/${run.total} 批）…`
+                  {run.stage === 'translate' ? `AI 正在本地化（第 ${run.done + 1}/${run.total} 批）…`
                     : running ? `正在导入 ${run.done + 1}/${run.total}…` : `完成：成功 ${run.ok} 个${run.failed.length ? `，失败 ${run.failed.length} 个` : ''}`}
                 </Typography>
                 {run.warn && <Typography sx={{ fontSize: 12, color: 'warning.main', wordBreak: 'break-all' }}>{run.warn}</Typography>}

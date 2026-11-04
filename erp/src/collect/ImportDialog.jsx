@@ -4,10 +4,12 @@ import { useNotify, useRefresh, useGetList } from 'react-admin';
 import { useNavigate } from 'react-router-dom';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem, Stack, Typography, Box, Checkbox,
-  Table, TableHead, TableRow, TableCell, TableBody, InputAdornment, Link, Alert, Chip,
+  Table, TableHead, TableRow, TableCell, TableBody, InputAdornment, Link, Alert, Chip, FormControlLabel,
 } from '@mui/material';
 import { supabase } from '../supabase';
 import { fmtMoney } from '../constants';
+import { translateItem, applyTranslation, translateAll } from './localize';
+import { useLlmConfig, llmLabel } from '../ai/llmConfig';
 
 const CATEGORIES = ['家居', '户外', '宠物', '美妆', '数码配件'];
 const FEE = 0.15;                       // 与商品页毛利估算一致：头程 ¥45/kg + 尾程 $4 + 平台佣金 15%
@@ -44,11 +46,15 @@ export const draftRows = (d, cny, margin) => (d.skus ?? []).map((s) => {
 // 1688 标题堆砌关键词，批量导入时取前 40 个字作为中文名
 export const defaultName = (d) => (d.title ?? '').replace(/[【\[][^】\]]*[】\]]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 40) || d.title?.slice(0, 40) || '';
 
-export const buildPayload = ({ d, rows, zh, en = '', category, optionName, image, status }) => {
-  // 描述取商品属性；与规格同名的属性（1688 会把全部规格值重复列一遍）和过长的值跳过
+// 描述取商品属性；与规格同名的属性（1688 会把全部规格值重复列一遍）和过长的值跳过
+export const descOf = (d) => {
   const propNames = new Set((d.props ?? []).map((x) => x.name));
-  const desc = (d.attributes ?? []).filter((a) => !propNames.has(a.name) && String(a.value).length <= 60)
+  return (d.attributes ?? []).filter((a) => !propNames.has(a.name) && String(a.value).length <= 60)
     .slice(0, 12).map((a) => `${a.name}：${a.value}`).join('；');
+};
+
+export const buildPayload = ({ d, rows, zh, en = '', category, optionName, image, status }) => {
+  const desc = descOf(d);
   return {
     status,
     name: { zh: zh.trim(), ...(en.trim() ? { en: en.trim() } : {}) },
@@ -74,7 +80,7 @@ export function ImportDialog({ draft, onClose }) {
   const d = draft.data ?? {};
   const [margin, setMargin] = useState(30);
   const [f, setF] = useState(() => ({
-    zh: d.title?.slice(0, 60) ?? '', en: '', category: '', status: 'active',
+    zh: d.title?.slice(0, 60) ?? '', en: '', category: '', status: 'active', ai: true,
     optionName: (d.props ?? []).map((p) => p.name).join(' / ') || '规格',
     image: d.images?.[0] ?? '',
   }));
@@ -83,6 +89,8 @@ export function ImportDialog({ draft, onClose }) {
   const [rows, setRows] = useState(() => draftRows(d, cny, 0.3));
   const usedFallback = (d.skus ?? []).some((s) => s.price == null || s.priceFromTier);
   const [busy, setBusy] = useState(false);
+  const [stage, setStage] = useState('');
+  const llm = useLlmConfig();
   const [err, setErr] = useState('');
 
   const set = (patch) => setF((x) => ({ ...x, ...patch }));
@@ -102,13 +110,20 @@ export function ImportDialog({ draft, onClose }) {
   const submit = async () => {
     if (invalid) { setErr(invalid); return; }
     setBusy(true); setErr('');
-    const { data: id, error } = await supabase.rpc('import_draft', {
-      p_draft: draft.id,
-      p: buildPayload({ d, rows, zh: f.zh, en: f.en, category: f.category, optionName: f.optionName, image: f.image, status: f.status }),
-    });
+    let p = buildPayload({ d, rows, zh: f.zh, en: f.en, category: f.category, optionName: f.optionName, image: f.image, status: f.status });
+    let warn = '';
+    if (f.ai) {
+      setStage('AI 正在生成多语言…');
+      const item = translateItem({ id: draft.id, title: f.zh, optionName: f.optionName, rows, description: descOf(d) });
+      const { results, errors } = await translateAll([item]);
+      p = applyTranslation(p, item, results[String(draft.id)], { keepZhName: true });
+      if (errors.length) warn = `（AI 翻译失败，只有中文：${errors[0]}）`;
+    }
+    setStage('');
+    const { data: id, error } = await supabase.rpc('import_draft', { p_draft: draft.id, p });
     setBusy(false);
     if (error) { setErr(error.message); return; }
-    notify(`已导入${f.status === 'active' ? '并上架' : '为草稿'}，共 ${picked.length} 个 SKU`, { type: 'success' });
+    notify(`已导入${f.status === 'active' ? '并上架' : '为草稿'}，共 ${picked.length} 个 SKU${warn}`, { type: warn ? 'warning' : 'success' });
     refresh();
     onClose();
     navigate(`/products/${id}`);
@@ -135,7 +150,7 @@ export function ImportDialog({ draft, onClose }) {
           </Stack>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
             <TextField label="English name（可选）" value={f.en} onChange={(e) => set({ en: e.target.value })} size="small" fullWidth
-              helperText="也可以导入后让 ✦ AI 运营助手写多语言 Listing" />
+              helperText={f.ai ? '留空则由 AI 生成；填写后以你的为准' : '也可以导入后让 ✦ AI 运营助手写多语言 Listing'} />
             <TextField label="规格名" value={f.optionName} onChange={(e) => set({ optionName: e.target.value })} size="small" sx={{ minWidth: 180 }} />
             <TextField select label="导入后" value={f.status} onChange={(e) => set({ status: e.target.value })} size="small" sx={{ minWidth: 210 }}>
               {STATUS_OPTIONS.map((o) => <MenuItem key={o.id} value={o.id}>{o.label}</MenuItem>)}
@@ -225,8 +240,11 @@ export function ImportDialog({ draft, onClose }) {
         </Stack>
       </DialogContent>
       <DialogActions>
+        <FormControlLabel sx={{ mr: 'auto', ml: 1 }} disabled={busy}
+          control={<Checkbox size="small" checked={f.ai} onChange={(e) => set({ ai: e.target.checked })} />}
+          label={<Typography sx={{ fontSize: 13 }}>AI 生成英 / 德 / 日 / 西语（商品名、规格、描述 · {llmLabel(llm)}）</Typography>} />
         <Button onClick={onClose} color="inherit" disabled={busy}>取消</Button>
-        <Button onClick={submit} variant="contained" disableElevation disabled={busy}>{busy ? '导入中…' : `导入 ${picked.length} 个 SKU`}</Button>
+        <Button onClick={submit} variant="contained" disableElevation disabled={busy}>{busy ? (stage || '导入中…') : `导入 ${picked.length} 个 SKU`}</Button>
       </DialogActions>
     </Dialog>
   );

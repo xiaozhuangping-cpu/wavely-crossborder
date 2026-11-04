@@ -157,7 +157,7 @@ const ChatPanel = ({ onClose, onReset }) => {
           <Typography sx={{ fontWeight: 700, lineHeight: 1.2 }}>{tr.chatTitle}</Typography>
           <Typography sx={{ fontSize: 12, opacity: 0.85 }}>● Online · AI</Typography>
         </Box>
-        <Tooltip title={lang === 'zh' ? 'AI 模型设置' : 'AI model settings'}><IconButton onClick={() => setSettings(true)} sx={{ color: '#fff' }} aria-label="model settings"><TuneIcon /></IconButton></Tooltip>
+        <Tooltip title={tr.aiSettings}><IconButton onClick={() => setSettings(true)} sx={{ color: '#fff' }} aria-label="model settings"><TuneIcon /></IconButton></Tooltip>
         <Tooltip title="New chat"><IconButton onClick={onReset} sx={{ color: '#fff' }} aria-label="new chat"><RestartAltIcon /></IconButton></Tooltip>
         <IconButton onClick={onClose} sx={{ color: '#fff' }} aria-label="close"><CloseIcon /></IconButton>
       </Stack>

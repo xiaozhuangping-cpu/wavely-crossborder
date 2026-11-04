@@ -127,9 +127,59 @@ async function translateNames({ body, llm }: ActionCtx) {
   };
 }
 
+// 整个商品的多语言：商品名（中文同时精简）、规格名、各维度规格值、描述。每次最多 5 个商品 / 80 个规格值
+const FOREIGN = ['en', 'de', 'ja', 'es'] as const;
+const pick = (o: any, langs: readonly string[], max = 120) =>
+  Object.fromEntries(langs.map((l) => [l, String(o?.[l] ?? '').trim().slice(0, max)]).filter(([, v]) => v));
+
+type Dim = { name: string; values: string[] };
+type Item = { id: string; title: string; dims: Dim[]; description: string };
+
+async function translateProducts({ body, llm }: ActionCtx) {
+  let budget = 80;
+  const items: Item[] = (Array.isArray(body.items) ? body.items : []).slice(0, 5).map((x: any): Item => {
+    const dims: Dim[] = (Array.isArray(x?.dims) ? x.dims : []).slice(0, 3).map((d: any) => {
+      const values = (Array.isArray(d?.values) ? d.values : []).map((v: any) => String(v).slice(0, 60)).slice(0, Math.max(budget, 0));
+      budget -= values.length;
+      return { name: String(d?.name ?? '').slice(0, 20), values };
+    });
+    return { id: String(x?.id ?? ''), title: String(x?.title ?? '').slice(0, 200), dims, description: String(x?.description ?? '').slice(0, 300) };
+  }).filter((x: Item) => x.id && x.title);
+  if (!items.length) throw new Error('没有需要翻译的商品');
+  const nValues = items.reduce((s, x) => s + x.dims.reduce((t, d) => t + d.values.length, 0), 0);
+
+  const text = await complete(llm, [
+    { role: 'system', content: `你是跨境电商本地化编辑。输入是 1688 批发商品（标题常堆砌关键词、营销词、批发用语），把每个商品本地化为 zh / en / de / ja / es：
+1. name：简洁商品名。zh ≤ 20 字；en / de / es ≤ 60 个字符、符合当地电商标题习惯；ja ≤ 30 字。去掉营销词（爆款、新款、年份、ins 风、网红）、批发用语（厂家、批发、一件代发、跨境、货源）和尺码体重说明，保留品类、材质与卖点，不编造。
+2. dims：与输入 dims 一一对应、顺序不变。name 为规格名的 en/de/ja/es 译名；values 为与输入 values 一一对应、长度相同的数组，每项给出 en/de/ja/es 简短译名（颜色、尺码等常用说法，尺码字母如 S/M/L/XL 保持原样，括号里的体重身高说明换算成当地习惯可省略，去掉"不退不换""拍此选项"等交易说明）。
+3. description：把中文属性描述译为 en/de/ja/es 的一两句自然描述（≤ 200 字符），没有描述则省略。
+只输出 JSON：{"items":[{"id":"…","name":{"zh":"…","en":"…","de":"…","ja":"…","es":"…"},"dims":[{"name":{"en":"…","de":"…","ja":"…","es":"…"},"values":[{"en":"…","de":"…","ja":"…","es":"…"}]}],"description":{"en":"…","de":"…","ja":"…","es":"…"}}]}，id 原样返回。` },
+    { role: 'user', content: JSON.stringify({ items }) },
+  ], { json: true, maxTokens: Math.min(8000, 400 + items.length * 600 + nValues * 70) });
+
+  const out = parseJson(text);
+  const byId = new Map(items.map((x) => [x.id, x]));
+  return {
+    items: (Array.isArray(out?.items) ? out.items : []).filter((x: any) => byId.has(String(x?.id))).map((x: any) => {
+      const src = byId.get(String(x.id))!;
+      return {
+        id: src.id,
+        name: { ...pick(x.name, FOREIGN), ...pick(x.name, ['zh'], 40) },
+        // 规格按输入对齐；模型漏掉或长度不符的项保持为空，前端回退中文
+        dims: src.dims.map((d: Dim, i: number) => {
+          const od = Array.isArray(x.dims) ? x.dims[i] : null;
+          const vals = Array.isArray(od?.values) && od.values.length === d.values.length ? od.values : [];
+          return { name: pick(od?.name, FOREIGN, 40), values: d.values.map((_: string, j: number) => pick(vals[j], FOREIGN, 80)) };
+        }),
+        description: pick(x.description, FOREIGN, 400),
+      };
+    }),
+  };
+}
+
 Deno.serve((req) => handleChat(req, {
   systemPrompt, tools, runTool,
-  actions: { translate_names: translateNames },
+  actions: { translate_names: translateNames, translate_products: translateProducts },
   isProposal: (r) => !!r?.pending_confirmation,
   messages: { tooMany: '你今天的内置 AI 额度（30 次）已用完。可以点右上角 ⚙ 填自己的 API Key 继续使用，或明天再来' },
 }));
