@@ -1,10 +1,11 @@
 # Wavely 跨境电商演示
 
-虚构品牌「Wavely 海浪优选」的跨境电商全链路演示：**ERP 后台 + 多语言独立站 + 1688 采集插件 + AI 助手 + AI 场景短片**，后端全部跑在 Supabase 免费版上，数据每天自动重置。
+虚构品牌「Wavely 海浪优选」的跨境电商全链路演示：**ERP 后台 + 多语言独立站 + 仓库 App + 1688 采集插件 + AI 助手 + AI 场景短片**，后端全部跑在 Supabase 免费版上，数据每天自动重置。
 
 > 本项目的代码、演示数据与界面设计均为 AI 辅助生成（使用 Claude Code），由作者策划与发布。
 
 - 演示入口：https://xiaozhuangping-cpu.github.io/wavely-crossborder/
+- 仓库 App：https://xiaozhuangping-cpu.github.io/wavely-crossborder/app/ （Flutter 网页版，另有安卓安装包）
 - ERP 后台：https://xiaozhuangping-cpu.github.io/wavely-crossborder/erp/ （访客一键匿名登录）
 - 独立站：https://xiaozhuangping-cpu.github.io/wavely-crossborder/shop/
 
@@ -29,6 +30,14 @@
 - 供应商管理（交期、联系人）；1688 导入的商品自动按供应商名关联供应商并记录起批量
 - AI 运营助手新增「补货建议」工具：直接问"FBA 仓该补哪些货"
 - 设计参考开源项目 [ittim-erp](https://github.com/salgee/ittim-erp)（采购单主表 + 明细、在库 + 在途 < 需求的补货预警）与 [InvenTree](https://github.com/inventree/InvenTree)（采购单状态、按明细分批收货），按本项目的 Supabase 架构重新实现
+
+### 📱 仓库助手 App（Flutter）
+
+![仓库助手 App](docs/screenshots/app-warehouse.jpg)
+
+- 与 ERP 共用同一个后端的移动端：**扫码收货入库**（扫码枪 / 相机 / 模拟扫码）、**逐件扫码拣货发货**（扫错件会提示，拣齐后生成运单号）、**库存查询**
+- 网页版：https://xiaozhuangping-cpu.github.io/wavely-crossborder/app/ · [安卓安装包](https://github.com/xiaozhuangping-cpu/wavely-crossborder/releases/download/app-latest/wavely-warehouse.apk)
+- 一套 Flutter 代码出 Web / Android / iOS；CI 自动测试、构建网页版并打包 APK 到 Release「app-latest」。详见 [`app/README.md`](app/README.md)
 
 ### 🧩 1688 采集插件 → 采集箱
 
@@ -69,6 +78,7 @@ erp/                    跨境 ERP（React + react-admin + ra-supabase-core + AG
   src/collect/          采集箱、插件安装入口、导入与 AI 本地化
   scripts/              构建时把 extension/ 打包成 zip 供 ERP 下载
 shop/                   多语言独立站（React + MUI + assistant-ui）
+app/                    仓库助手 App（Flutter：Web / Android / iOS）
 extension/              1688 采集插件（Chrome / Edge MV3）
 supabase/
   migrations/           表结构、RLS、业务函数、演示数据、定时任务

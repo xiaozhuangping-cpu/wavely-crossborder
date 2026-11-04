@@ -53,12 +53,24 @@ jobs:
       - name: Build shop
         working-directory: shop
         run: npm ci && npm run build
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.5'
+          channel: stable
+          cache: true
+      - name: Build warehouse app (Flutter web)
+        working-directory: app
+        run: |
+          flutter pub get
+          flutter test
+          flutter build web --release --base-href /wavely-crossborder/app/ --no-web-resources-cdn
       - name: Assemble site
         run: |
           mkdir -p _site
           cp -r site/. _site/
           cp -r erp/dist _site/erp
           cp -r shop/dist _site/shop
+          cp -r app/build/web _site/app
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

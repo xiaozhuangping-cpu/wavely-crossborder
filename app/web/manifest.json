@@ -1,0 +1,35 @@
+{
+  "name": "Wavely 仓库助手",
+  "short_name": "Wavely 仓库",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#F5FAFC",
+  "theme_color": "#0E7490",
+  "description": "扫码收货入库、拣货发货、库存查询，与 Wavely 跨境 ERP 实时同步",
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "icons/Icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/Icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/Icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/Icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
