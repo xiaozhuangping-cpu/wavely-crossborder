@@ -13,7 +13,7 @@ import { applySeo, productMeta } from '../seo';
 // ---------- 规格选择 ----------
 const SEP = ' / ';
 const COLLAPSE_AT = 12;
-const chipSx = { height: 'auto', minHeight: 38, maxWidth: '100%', px: 0.5, fontSize: 14, borderRadius: 2,
+const chipSx = { height: 'auto', minHeight: 38, maxWidth: '100%', px: 0.5, fontSize: 14, borderRadius: '8px',
   '& .MuiChip-label': { whiteSpace: 'normal', py: 0.75, lineHeight: 1.35 } };
 
 const OptionChips = ({ values, selected, onSelect, isAvailable = () => true }) => {
@@ -29,7 +29,7 @@ const OptionChips = ({ values, selected, onSelect, isAvailable = () => true }) =
           sx={{ ...chipSx, opacity: v === selected || isAvailable(v) ? 1 : 0.45 }} />
       ))}
       {values.length > COLLAPSE_AT && idx < COLLAPSE_AT && (
-        <Button size="small" onClick={() => setAll((x) => !x)} sx={{ borderRadius: 2, minHeight: 38 }}>
+        <Button size="small" onClick={() => setAll((x) => !x)} sx={{ borderRadius: '8px', minHeight: 38 }}>
           {all ? tr.showLess : `+${values.length - COLLAPSE_AT}`}
         </Button>
       )}
@@ -121,7 +121,7 @@ export const Product = () => {
               )}
               <Box sx={{ flex: 1, minWidth: 0, width: '100%' }}>
                 {playing && !hoverSrc && film
-                  ? <Box sx={{ position: 'relative', aspectRatio: '1 / 1', borderRadius: 5, overflow: 'hidden', display: 'grid', alignItems: 'center', bgcolor: '#111' }}>
+                  ? <Box sx={{ position: 'relative', aspectRatio: '1 / 1', borderRadius: '16px', overflow: 'hidden', display: 'grid', alignItems: 'center', bgcolor: '#111' }}>
                       {/* 16:9 短片放进方形主图位：用封面模糊放大做背景，避免黑边 */}
                       <Box component="img" src={film.poster} alt="" aria-hidden
                         sx={{ position: 'absolute', inset: -40, width: 'calc(100% + 80px)', height: 'calc(100% + 80px)', objectFit: 'cover', filter: 'blur(28px) brightness(.85)' }} />
@@ -130,13 +130,13 @@ export const Product = () => {
                   : <ImageZoom src={hoverSrc ?? mainSrc} alt={productName(p, lang)} />}
               </Box>
             </Box>
-          ) : <ProductArt p={p} size="lg" sx={{ borderRadius: 5 }} />}
+          ) : <ProductArt p={p} size="lg" sx={{ borderRadius: '16px' }} />}
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
-          <Chip size="small" label={tr.cats[p.category]} sx={{ mb: 2 }} />
+          <Typography sx={{ fontSize: 13, color: 'text.secondary', mb: 1.5 }}>{tr.cats[p.category]}</Typography>
           <Typography variant="h1" sx={{ fontSize: { xs: 28, md: 38 }, lineHeight: 1.2 }}>{productTitle(p, lang)}</Typography>
           {productTitle(p, lang) !== productName(p, lang) && <Typography sx={{ color: 'text.secondary', mt: 1 }}>{productName(p, lang)}</Typography>}
-          <Typography sx={{ fontFamily: 'var(--display)', fontSize: 34, fontWeight: 600, color: 'primary.main', my: 2.5 }}>{price(sku?.price_usd ?? p.price_usd)}</Typography>
+          <Typography sx={{ fontFamily: 'var(--display)', fontSize: 32, fontWeight: 500, fontVariantNumeric: 'tabular-nums', my: 2.5 }}>{price(sku?.price_usd ?? p.price_usd)}</Typography>
 
           {skus.length > 1 && <VariantPicker p={p} skus={skus} sku={sku} lang={lang} tr={tr} onPick={pick} />}
 
@@ -147,7 +147,7 @@ export const Product = () => {
           )}
           <Typography sx={{ color: 'text.secondary', mt: bullets.length ? 2 : 4, whiteSpace: 'pre-wrap', lineHeight: 1.75 }}>{productDesc(p, lang)}</Typography>
           <Stack direction="row" spacing={3} sx={{ mt: 3, fontSize: 14, color: 'text.secondary', flexWrap: 'wrap' }}>
-            <span>{tr.sku}: {sku?.sku ?? p.sku}</span><span>{tr.weight}: {p.weight_g} g</span>
+            <span>{tr.sku}: <Box component="span" sx={{ fontFamily: 'var(--mono)', fontSize: 13 }}>{sku?.sku ?? p.sku}</Box></span><span>{tr.weight}: {p.weight_g} g</span>
           </Stack>
           <Box sx={{ mt: 4 }}><Perks /></Box>
         </Grid>

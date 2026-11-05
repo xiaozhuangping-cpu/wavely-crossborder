@@ -18,7 +18,7 @@ export const Logo = () => (
       <rect width="64" height="64" rx="16" fill="#0e7490" />
       <path d="M10 38c8-10 14-10 22 0s14 10 22 0" stroke="#c2e7ff" strokeWidth="7" fill="none" strokeLinecap="round" />
     </svg>
-    <Typography sx={{ fontFamily: 'var(--display)', fontSize: 22, fontWeight: 600, letterSpacing: '-.02em' }}>Wavely</Typography>
+    <Typography sx={{ fontFamily: 'var(--display)', fontSize: 22, fontWeight: 500, letterSpacing: '-.01em' }}>Wavely</Typography>
   </Box>
 );
 
@@ -69,7 +69,7 @@ export const Header = () => {
         </Box>
         <Box sx={{ display: { xs: 'block', md: 'none' } }}><LocaleMenu /></Box>
         <IconButton onClick={() => setCartOpen(true)} aria-label={tr.cart}>
-          <Badge badgeContent={count} color="secondary"><ShoppingBagOutlinedIcon /></Badge>
+          <Badge badgeContent={count} color="primary"><ShoppingBagOutlinedIcon /></Badge>
         </IconButton>
       </Stack>
     </Box>
@@ -83,7 +83,7 @@ export const CartDrawer = () => {
     <Drawer anchor="right" open={cartOpen} onClose={() => setCartOpen(false)} slotProps={{ paper: { sx: { width: { xs: '100vw', sm: 420 }, bgcolor: 'background.default' } } }}>
       <Stack sx={{ height: '100%' }}>
         <Stack direction="row" sx={{ alignItems: 'center', px: 2.5, height: 64, borderBottom: 1, borderColor: 'divider' }}>
-          <Typography sx={{ fontFamily: 'var(--display)', fontSize: 22, fontWeight: 600, flex: 1 }}>{tr.cart}</Typography>
+          <Typography sx={{ fontFamily: 'var(--display)', fontSize: 22, fontWeight: 500, flex: 1 }}>{tr.cart}</Typography>
           <IconButton onClick={() => setCartOpen(false)} aria-label="close"><CloseIcon /></IconButton>
         </Stack>
         <Box sx={{ flex: 1, overflowY: 'auto', px: 2.5, py: 2 }}>
@@ -91,13 +91,13 @@ export const CartDrawer = () => {
           <Stack spacing={2}>
             {lines.map((l) => (
               <Stack key={l.id} direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-                <Box sx={{ width: 72, flexShrink: 0 }}><ProductArt p={l.product} src={l.sku.image_url} sx={{ borderRadius: 2, '& span': { fontSize: '36px !important' } }} /></Box>
+                <Box sx={{ width: 72, flexShrink: 0 }}><ProductArt p={l.product} src={l.sku.image_url} sx={{ borderRadius: '8px', '& span': { fontSize: '36px !important' } }} /></Box>
                 <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography sx={{ fontSize: 14, fontWeight: 600, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{productTitle(l.product, lang)}</Typography>
+                  <Typography sx={{ fontSize: 14, fontWeight: 500, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{productTitle(l.product, lang)}</Typography>
                   {l.product.skus.length > 1 && <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>{optionLabel(l.product.option_name, lang)}: {optionLabel(l.sku.option_value, lang)}</Typography>}
-                  <Typography sx={{ fontSize: 14, color: 'primary.main', fontWeight: 600 }}>{price(l.sku.price_usd)}</Typography>
+                  <Typography sx={{ fontSize: 14, fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>{price(l.sku.price_usd)}</Typography>
                 </Box>
-                <Stack direction="row" sx={{ alignItems: 'center', border: 1, borderColor: 'divider', borderRadius: 999 }}>
+                <Stack direction="row" sx={{ alignItems: 'center', border: 1, borderColor: 'divider', borderRadius: '8px' }}>
                   <IconButton size="small" onClick={() => setQty(l.id, l.qty - 1)} aria-label="-"><RemoveIcon fontSize="small" /></IconButton>
                   <Typography sx={{ minWidth: 20, textAlign: 'center', fontSize: 14 }}>{l.qty}</Typography>
                   <IconButton size="small" onClick={() => setQty(l.id, l.qty + 1)} aria-label="+"><AddIcon fontSize="small" /></IconButton>

@@ -32,9 +32,9 @@ export const ImageZoom = ({ src, alt, paneWidth }) => {
     <Box>
       <Box ref={box} onMouseMove={desktopZoom ? onMove : undefined} onMouseLeave={() => setPos(null)}
         onClick={desktopZoom ? undefined : () => setOpen(true)}
-        sx={{ position: 'relative', aspectRatio: '1 / 1', bgcolor: '#fff', borderRadius: 5,
+        sx={{ position: 'relative', aspectRatio: '1 / 1', bgcolor: '#fff', borderRadius: '16px',
           cursor: desktopZoom ? 'crosshair' : 'zoom-in', userSelect: 'none' }}>
-        <Box component="img" src={src} alt={alt} draggable={false} sx={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', borderRadius: 5 }} />
+        <Box component="img" src={src} alt={alt} draggable={false} sx={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', borderRadius: '16px' }} />
 
         {/* 取景框 */}
         {desktopZoom && pos && (
@@ -45,7 +45,7 @@ export const ImageZoom = ({ src, alt, paneWidth }) => {
         {/* 放大窗口：贴在图片右侧，覆盖商品信息 */}
         {desktopZoom && pos && (
           <Box aria-hidden sx={{ position: 'absolute', zIndex: 20, top: 0, left: 'calc(100% + 24px)', width: paneWidth ?? '110%', aspectRatio: '1 / 1',
-            bgcolor: '#fff', borderRadius: 3, boxShadow: '0 20px 50px rgba(16,32,31,.18)', pointerEvents: 'none',
+            bgcolor: '#fff', borderRadius: '12px', boxShadow: '0 20px 50px rgba(16,32,31,.18)', pointerEvents: 'none',
             backgroundImage: `url("${src}")`, backgroundRepeat: 'no-repeat', backgroundSize: `${ZOOM * 100}%`,
             backgroundPosition: `${((pos.x - lens / 2) / (1 - lens)) * 100}% ${((pos.y - lens / 2) / (1 - lens)) * 100}%` }} />
         )}
@@ -92,7 +92,7 @@ export const Thumbs = ({ items, activeSrc, onHover, onPick }) => (
     scrollbarWidth: 'thin' }}>
     {items.map((it) => (
       <Box key={it.src} component="button" type="button" onMouseEnter={() => onHover?.(it)} onClick={() => onPick?.(it)} aria-label={it.label}
-        sx={{ position: 'relative', width: 56, height: 56, p: 0.5, flexShrink: 0, bgcolor: '#fff', borderRadius: 2, cursor: 'pointer',
+        sx={{ position: 'relative', width: 56, height: 56, p: 0.5, flexShrink: 0, bgcolor: '#fff', borderRadius: '8px', cursor: 'pointer',
           border: 0, boxShadow: it.src === activeSrc ? '0 0 0 2px #0e7490' : 'none' }}>
         <Box component="img" src={it.src} alt="" loading="lazy" sx={{ width: '100%', height: '100%', objectFit: it.video ? 'cover' : 'contain', display: 'block', borderRadius: it.video ? 1.5 : 0 }} />
         {it.video && (

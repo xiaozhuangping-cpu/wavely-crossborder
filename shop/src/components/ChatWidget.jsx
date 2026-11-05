@@ -50,7 +50,7 @@ const makeAdapter = (getCtx) => ({
 
     if (!res || !res.ok || !res.headers.get('content-type')?.includes('text/event-stream')) {
       const d = res ? await res.json().catch(() => ({})) : {};
-      yield { content: [{ type: 'text', text: `⚠️ ${d.error ?? 'Network error, please try again.'}` }] };
+      yield { content: [{ type: 'text', text: `${d.error ?? 'Network error, please try again.'}` }] };
       return;
     }
     const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
@@ -66,7 +66,7 @@ const makeAdapter = (getCtx) => ({
         let ev; try { ev = JSON.parse(line.slice(5)); } catch { continue; }
         if (ev.type === 'text') { const last = content.at(-1); if (last?.type === 'text') last.text += ev.delta; else content.push({ type: 'text', text: ev.delta }); }
         else if (ev.type === 'tool') content.push({ type: 'tool-call', toolCallId: ev.part.toolCallId, toolName: ev.part.toolName, args: ev.part.args ?? {}, argsText: JSON.stringify(ev.part.args ?? {}), result: ev.part.result });
-        else if (ev.type === 'error') content.push({ type: 'text', text: `\n\n⚠️ ${ev.message}` });
+        else if (ev.type === 'error') content.push({ type: 'text', text: `\n\n${ev.message}` });
         changed = true;
       }
       if (changed) yield snap();
@@ -84,11 +84,11 @@ const ProductsTool = ({ result }) => {
   return (
     <Stack direction="row" spacing={1.25} sx={{ overflowX: 'auto', py: 1, mx: -0.5, px: 0.5, '&::-webkit-scrollbar': { height: 6 } }}>
       {rows.map((p) => (
-        <Paper key={p.id} variant="outlined" sx={{ width: 168, flexShrink: 0, p: 1, borderRadius: 3 }}>
+        <Paper key={p.id} variant="outlined" sx={{ width: 168, flexShrink: 0, p: 1, borderRadius: '12px' }}>
           <Box component={RouterLink} to={`/p/${p.id}`} sx={{ textDecoration: 'none', color: 'inherit' }}>
-            <ProductArt p={p} sx={{ borderRadius: 2, '& span': { fontSize: '48px !important' } }} />
+            <ProductArt p={p} sx={{ borderRadius: '8px', '& span': { fontSize: '48px !important' } }} />
             <Typography sx={{ fontSize: 13, fontWeight: 600, mt: 1, lineHeight: 1.3, height: 34, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{productTitle(p, lang)}</Typography>
-            <PriceFrom p={p} sx={{ fontSize: 14, fontWeight: 700, my: 0.5, fontFamily: 'inherit' }} />
+            <PriceFrom p={p} sx={{ fontSize: 14, fontWeight: 500, my: 0.5, fontFamily: 'inherit' }} />
           </Box>
           <AddButton product={p} size="small" fullWidth openCart={false} />
         </Paper>
@@ -100,7 +100,7 @@ const ProductsTool = ({ result }) => {
 const TrackTool = ({ result }) => {
   const { tr, lang } = useStore();
   if (!result || result.not_found || result.error) return null;
-  return <Paper variant="outlined" sx={{ p: 1.5, my: 1, borderRadius: 3, '& li p': { fontSize: 13 } }}><Timeline data={result} tr={tr} lang={lang} /></Paper>;
+  return <Paper variant="outlined" sx={{ p: 1.5, my: 1, borderRadius: '12px', '& li p': { fontSize: 13 } }}><Timeline data={result} tr={tr} lang={lang} /></Paper>;
 };
 
 const TOOLS = { search_products: ProductsTool, track_order: TrackTool };
@@ -154,7 +154,7 @@ const ChatPanel = ({ onClose, onReset }) => {
       <Stack direction="row" sx={{ alignItems: 'center', gap: 1.25, px: 2, py: 1.5, bgcolor: 'primary.main', color: '#fff' }}>
         <Box sx={{ width: 36, height: 36, borderRadius: '50%', bgcolor: 'rgba(255,255,255,.18)', display: 'grid', placeItems: 'center' }}><AutoAwesomeIcon fontSize="small" /></Box>
         <Box sx={{ flex: 1 }}>
-          <Typography sx={{ fontWeight: 700, lineHeight: 1.2 }}>{tr.chatTitle}</Typography>
+          <Typography sx={{ fontWeight: 500, lineHeight: 1.2 }}>{tr.chatTitle}</Typography>
           <Typography sx={{ fontSize: 12, opacity: 0.85 }}>● Online · AI</Typography>
         </Box>
         <Tooltip title={tr.aiSettings}><IconButton onClick={() => setSettings(true)} sx={{ color: '#fff' }} aria-label="model settings"><TuneIcon /></IconButton></Tooltip>
@@ -234,7 +234,7 @@ export default function ChatWindow({ open, onClose }) {
     <AssistantRuntimeProvider runtime={runtime}>
       <Slide direction="up" in={open} appear>
         <Paper elevation={12} sx={{ position: 'fixed', zIndex: 1300, overflow: 'hidden', display: 'flex', flexDirection: 'column',
-          ...(mobile ? { inset: 0, borderRadius: 0 } : { right: 24, bottom: 96, width: 380, height: 'min(620px, calc(100dvh - 140px))', borderRadius: 4 }),
+          ...(mobile ? { inset: 0, borderRadius: 0 } : { right: 24, bottom: 96, width: 380, height: 'min(620px, calc(100dvh - 140px))', borderRadius: '16px' }),
           visibility: open ? 'visible' : 'hidden' }}>
           <ChatPanel onClose={onClose} onReset={() => { saveThread([]); runtime.thread.reset?.(); }} />
         </Paper>

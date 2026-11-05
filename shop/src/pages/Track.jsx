@@ -21,7 +21,7 @@ export const Timeline = ({ data, tr, lang }) => {
   return (
     <Box>
       <Stack direction="row" sx={{ gap: 1, flexWrap: 'wrap', alignItems: 'center', mb: 2 }}>
-        <Typography sx={{ fontFamily: 'monospace', fontWeight: 700 }}>{data.order_no}</Typography>
+        <Typography sx={{ fontFamily: 'var(--mono)', fontWeight: 500 }}>{data.order_no}</Typography>
         <Chip size="small" color={data.status === 'delivered' ? 'success' : 'primary'} label={tr.status[data.status] ?? data.status} />
         {s && <Chip size="small" variant="outlined" label={`${s.carrier} · ${s.tracking_no}`} />}
       </Stack>

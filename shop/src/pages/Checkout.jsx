@@ -41,7 +41,7 @@ export const Checkout = () => {
       <Typography variant="h1" sx={{ fontSize: { xs: 30, md: 40 }, mb: 3 }}>{tr.checkout}</Typography>
       <Grid container spacing={4}>
         <Grid size={{ xs: 12, md: 7 }}>
-          <Alert severity="info" sx={{ mb: 3, borderRadius: 3 }}>{tr.demoNote}</Alert>
+          <Alert severity="info" sx={{ mb: 3, borderRadius: '12px' }}>{tr.demoNote}</Alert>
           <Stack component="form" spacing={2} onSubmit={submit} id="checkout">
             <TextField label={tr.name} value={f.name} onChange={set('name')} required inputProps={{ maxLength: 80 }} />
             <TextField label={tr.email} type="email" value={f.email} onChange={set('email')} required placeholder="demo@example.com" />
@@ -63,7 +63,7 @@ export const Checkout = () => {
               ))}
               <Divider />
               <Stack direction="row" sx={{ justifyContent: 'space-between', color: 'text.secondary' }}><Typography>{tr.shipping}</Typography><Typography>{tr.free}</Typography></Stack>
-              <Stack direction="row" sx={{ justifyContent: 'space-between' }}><Typography sx={{ fontWeight: 700 }}>{tr.total}</Typography><Typography sx={{ fontWeight: 700, fontSize: 20 }}>{price(subtotalUsd)}</Typography></Stack>
+              <Stack direction="row" sx={{ justifyContent: 'space-between' }}><Typography sx={{ fontWeight: 500 }}>{tr.total}</Typography><Typography sx={{ fontWeight: 500, fontSize: 20, fontVariantNumeric: 'tabular-nums' }}>{price(subtotalUsd)}</Typography></Stack>
               <Button type="submit" form="checkout" size="large" variant="contained" disabled={busy}>{busy ? tr.placing : `${tr.placeOrder} · ${price(subtotalUsd)}`}</Button>
             </Stack>
           </Card>
@@ -81,8 +81,8 @@ export const Done = () => {
       <CheckCircleIcon sx={{ fontSize: 72, color: 'success.main' }} />
       <Typography variant="h1" sx={{ fontSize: { xs: 30, md: 40 }, my: 2 }}>{tr.thanks}</Typography>
       <Typography sx={{ color: 'text.secondary' }}>{tr.orderNo}</Typography>
-      <Typography sx={{ fontFamily: 'monospace', fontSize: 24, fontWeight: 700, my: 1, letterSpacing: '.05em' }}>{no}</Typography>
-      <Alert severity="success" icon={false} sx={{ my: 3, borderRadius: 3, textAlign: 'left' }}>{tr.orderSynced}</Alert>
+      <Typography sx={{ fontFamily: 'var(--mono)', fontSize: 24, fontWeight: 500, my: 1 }}>{no}</Typography>
+      <Alert severity="success" icon={false} sx={{ my: 3, borderRadius: '12px', textAlign: 'left' }}>{tr.orderSynced}</Alert>
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ justifyContent: 'center' }}>
         <Button component={RouterLink} to={`/track?no=${no}`} variant="contained">{tr.track}</Button>
         <Button href={`${ERP_URL}#/orders?filter=${encodeURIComponent(JSON.stringify({ 'order_no@ilike': no }))}`} variant="outlined">{tr.viewInErp} ↗</Button>
