@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-0e7490.svg)](LICENSE)
 [![Live demo](https://img.shields.io/badge/demo-online-16a34a.svg)](https://xiaozhuangping-cpu.github.io/wavely-crossborder/)
 
-> **English** · An open-source, end-to-end cross-border e-commerce demo: an ERP (orders, SKUs, multi-warehouse inventory, replenishment & purchasing with approval workflow, database-enforced RBAC, audit log), a 5-language storefront with an AI shopping assistant, a Flutter warehouse app (scan to receive / pick & ship), a Chrome extension that collects products from 1688, AI product localization and AI-generated product films. Built with React, Flutter and Supabase (Postgres + RLS + Edge Functions), tested in CI. [Try it live →](https://xiaozhuangping-cpu.github.io/wavely-crossborder/)
+[English](README.en.md) · **简体中文**
 
 [![Wavely 宣传片：一分钟看完整条链路（点击播放）](site/promo/poster.jpg)](https://xiaozhuangping-cpu.github.io/wavely-crossborder/promo/wavely-promo.mp4)
 
