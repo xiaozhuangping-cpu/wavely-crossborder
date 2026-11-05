@@ -16,78 +16,87 @@
     <meta name="twitter:description" content="ERP 后台 + 多语言独立站 + AI 助手，基于 React 与 Supabase。AI 辅助生成。" />
     <meta name="twitter:image" content="https://xiaozhuangping-cpu.github.io/wavely-crossborder/og.jpg" />
   <style>
-    :root { --bg:#f4f7f8; --card:#fff; --text:#0f172a; --muted:#64748b; --line:#e2e8f0; --brand:#0e7490; }
-    @media (prefers-color-scheme: dark) { :root { --bg:#0b1416; --card:#13201f; --text:#e2e8f0; --muted:#94a3b8; --line:#1f2f30; --brand:#22d3ee; } }
+    :root { --bg:#f7f6f2; --card:#fff; --raised:#efede7; --text:#171a1a; --sub:#4f5655; --muted:#6c7372; --line:rgba(23,26,26,.09); --brand:#0e7490; --ok:#16a34a;
+      --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace; --ease:cubic-bezier(.22,1,.36,1); }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141515; --card:#1a1b1b; --raised:#232424; --text:#ededec; --sub:#a4a8a7; --muted:#878c8b; --line:rgba(237,237,236,.08); --brand:#5fb4c6; --ok:#4cc38a; } }
     * { box-sizing:border-box; margin:0; }
-    body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); line-height:1.7; padding:clamp(32px,8vw,96px) 16px; }
+    body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); line-height:1.7; padding:clamp(48px,8vw,96px) 16px; }
     main { max-width:960px; margin:0 auto; }
-    .eyebrow { color:var(--brand); letter-spacing:.2em; font-size:.8rem; font-weight:700; text-transform:uppercase; }
-    h1 { font-size:clamp(2rem,6vw,3.2rem); line-height:1.2; margin:8px 0 12px; }
-    p.lead { color:var(--muted); max-width:640px; }
-    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(260px,100%),1fr)); gap:16px; margin-top:40px; }
-    a.card, div.card { display:block; padding:24px; border-radius:16px; background:var(--card); border:1px solid var(--line); color:inherit; text-decoration:none; transition:transform .2s, border-color .2s; }
-    a.card:hover { transform:translateY(-4px); border-color:var(--brand); }
-    .card h2 { font-size:1.2rem; margin:8px 0 4px; }
-    .card p { color:var(--muted); font-size:.92rem; }
-    .tag { display:inline-block; font-size:.75rem; padding:2px 10px; border-radius:999px; border:1px solid var(--line); color:var(--muted); }
-    .live { color:#16a34a; border-color:#16a34a55; }
-    h3 { font-size:1.35rem; margin:56px 0 4px; }
-    .sub { color:var(--muted); font-size:.92rem; }
+    .meta { color:var(--muted); font-size:14px; }
+    .mono { font-family:var(--mono); font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; }
+    h1 { font-size:clamp(32px,6vw,48px); font-weight:500; line-height:1.15; letter-spacing:-.02em; margin:8px 0 16px; }
+    p.lead { color:var(--sub); max-width:640px; font-size:16px; }
+    .note { color:var(--muted); font-size:14px; margin-top:8px; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(280px,100%),1fr)); gap:16px; margin-top:32px; }
+    a.card { display:flex; flex-direction:column; padding:24px; border-radius:16px; background:var(--card); border:1px solid var(--line); color:inherit; text-decoration:none; transition:border-color 160ms var(--ease), background-color 160ms var(--ease); }
+    a.card:hover { border-color:color-mix(in srgb, var(--brand) 45%, transparent); }
+    a.card:focus-visible, .dl:focus-visible { outline:2px solid var(--brand); outline-offset:2px; }
+    .card .head { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    .live { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); }
+    .live::before { content:""; width:6px; height:6px; border-radius:50%; background:var(--ok); }
+    .card h2 { font-size:18px; font-weight:500; margin:12px 0 4px; }
+    .card p { color:var(--sub); font-size:14px; }
+    .wide { margin-top:16px; }
+    .dl { color:var(--brand); text-decoration:none; white-space:nowrap; }
+    .dl:hover { text-decoration:underline; }
+    h3 { font-size:22px; font-weight:500; margin:64px 0 4px; }
+    .sub { color:var(--sub); font-size:14px; }
     .films { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(360px,100%),1fr)); gap:12px; margin-top:16px; }
-    .films a { position:relative; display:block; border-radius:14px; overflow:hidden; background:#000; aspect-ratio:16/9; }
+    .films a { position:relative; display:block; border-radius:12px; overflow:hidden; background:#000; aspect-ratio:16/9; }
     .films video { width:100%; height:100%; object-fit:cover; display:block; }
-    .films span { position:absolute; left:12px; bottom:10px; color:#fff; font-weight:600; font-size:.9rem; text-shadow:0 1px 6px rgba(0,0,0,.5); }
+    .films span { position:absolute; inset:auto 0 0 0; padding:32px 16px 12px; color:#fff; font-weight:500; font-size:14px; background:linear-gradient(transparent, rgba(0,0,0,.55)); }
     .points { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(280px,100%),1fr)); gap:12px; margin-top:16px; padding:0; list-style:none; }
-    .points li { padding:16px 18px; border-radius:14px; background:var(--card); border:1px solid var(--line); font-size:.9rem; color:var(--muted); }
-    .points b { display:block; color:var(--text); font-size:.98rem; margin-bottom:2px; }
-    .promo { margin:32px 0 0; }
+    .points li { padding:16px 20px; border-radius:12px; background:var(--card); border:1px solid var(--line); font-size:14px; color:var(--sub); }
+    .points b { display:block; color:var(--text); font-size:15px; font-weight:500; margin-bottom:4px; }
+    .promo { margin:40px 0 0; }
     .promo video { width:100%; aspect-ratio:16/9; display:block; border-radius:16px; background:#000; }
-    .promo figcaption { color:var(--muted); font-size:.88rem; margin-top:8px; }
-    .contact { display:flex; flex-wrap:wrap; align-items:center; gap:24px; margin-top:48px; padding:24px; border:1px solid var(--line); border-radius:16px; background:var(--card); }
-    .contact h2 { font-size:1.35rem; margin:4px 0 8px; }
-    .contact p { color:var(--muted); font-size:.92rem; }
-    .contact a { display:block; width:264px; max-width:100%; flex-shrink:0; }
-    .contact img { display:block; width:100%; height:auto; border-radius:12px; }
-    footer { margin-top:56px; color:var(--muted); font-size:.85rem; }
+    .promo figcaption { color:var(--muted); font-size:13px; margin-top:8px; }
+    .contact { display:flex; flex-wrap:wrap; align-items:center; gap:24px; margin-top:64px; padding:24px; border:1px solid var(--line); border-radius:16px; background:var(--card); }
+    .contact > div { flex:1 1 240px; }
+    .contact h2 { font-size:22px; font-weight:500; margin:4px 0 8px; }
+    .contact p { color:var(--sub); font-size:14px; }
+    .contact a { display:block; width:240px; max-width:100%; flex-shrink:0; }
+    .contact img { display:block; width:100%; height:auto; border-radius:8px; }
+    footer { margin-top:64px; color:var(--muted); font-size:13px; }
     footer a { color:var(--brand); }
   </style>
 </head>
 <body>
 <main>
-  <p class="eyebrow">Wavely 海浪优选 · Cross-border Demo</p>
+  <p class="meta">Wavely 海浪优选 · 跨境电商演示</p>
   <h1>跨境电商全链路演示</h1>
   <p class="lead">一个虚构的跨境品牌，从后台到前台完整跑通：多平台订单、海外仓库存、物流轨迹、多币种利润。后端基于 Supabase，数据每天自动重置。</p>
-  <p class="lead" style="margin-top:12px"><span class="tag">✦ AI 辅助生成</span> 本演示的代码、数据与设计均在 AI（Claude Code）辅助下完成。</p>
+  <p class="note">本演示的代码、数据与设计均在 AI（Claude Code）辅助下完成</p>
   <figure class="promo">
     <video src="promo/wavely-promo.mp4" poster="promo/poster.jpg" controls playsinline preload="metadata"></video>
-    <figcaption>一分钟看完整条链路：1688 采集 → AI 本地化 → 五语言上架 → 下单 → 扫码发货 → 补货审批（宣传片由代码渲染，源码在仓库 wavely-promo/）</figcaption>
+    <figcaption>一分钟看完整条链路：1688 采集 → AI 本地化 → 五语言上架 → 下单 → 扫码发货 → 补货审批。宣传片由代码渲染，源码在仓库 wavely-promo/</figcaption>
   </figure>
   <div class="grid">
     <a class="card" href="erp/">
-      <span class="tag live">● 在线</span>
-      <h2>🗂️ 跨境 ERP 后台</h2>
-      <p>Amazon / Shopee / TikTok Shop / 独立站订单统一管理，SPU + 多规格 SKU、海外仓库存预警、利润计算器。内置 ✦ AI 运营助手：问数据、写多语言 Listing、批量发货（写操作需确认）。</p>
+      <div class="head"><span class="live">在线</span><span class="mono">/erp</span></div>
+      <h2>跨境 ERP 后台</h2>
+      <p>Amazon / Shopee / TikTok Shop / 独立站订单统一管理，SPU + 多规格 SKU、海外仓库存预警、利润计算器。内置 AI 运营助手：问数据、写多语言 Listing、批量发货，写操作需确认。</p>
     </a>
     <a class="card" href="shop/">
-      <span class="tag live">● 在线</span>
-      <h2>🌐 多语言独立站</h2>
-      <p>中英德日西五种语言、6 种币种，颜色 × 尺码分组选规格、商品图放大镜与场景短片。内置 ✦ AI 客服（导购、查物流）。下单实时同步到 ERP。</p>
+      <div class="head"><span class="live">在线</span><span class="mono">/shop</span></div>
+      <h2>多语言独立站</h2>
+      <p>中英德日西五种语言、6 种币种，颜色 × 尺码分组选规格、商品图放大镜与场景短片。内置 AI 客服，可导购、查物流。下单实时同步到 ERP。</p>
     </a>
     <a class="card" href="erp/#/import_drafts">
-      <span class="tag live">● 在线</span>
-      <h2>🧩 1688 采集插件</h2>
-      <p>Chrome / Edge 插件：1688 列表页勾选批量采集、详情页一键采集（规格、阶梯价、重量、图片）。在 ERP 采集箱按目标毛利定价，AI 本地化后批量导入上架。</p>
+      <div class="head"><span class="live">在线</span><span class="mono">/erp#import_drafts</span></div>
+      <h2>1688 采集插件</h2>
+      <p>Chrome / Edge 插件：1688 列表页勾选批量采集、详情页一键采集规格、阶梯价、重量和图片。在 ERP 采集箱按目标毛利定价，AI 本地化后批量导入上架。</p>
     </a>
   </div>
 
-  <a class="card" href="app/" style="margin-top:16px">
-    <span class="tag live">● 在线</span>
-    <h2>📱 仓库助手 App（Flutter）</h2>
-    <p>同一个后端的移动端：扫码收货入库、逐件扫码拣货发货（生成运单号）、库存查询，操作实时同步到 ERP。网页版直接试用，也可以<span style="white-space:nowrap">下载</span> <span class="tag" style="cursor:pointer" onclick="event.preventDefault();location.href='https://github.com/xiaozhuangping-cpu/wavely-crossborder/releases/download/app-latest/wavely-warehouse.apk'">安卓安装包 ↓</span></p>
+  <a class="card wide" href="app/">
+    <div class="head"><span class="live">在线</span><span class="mono">/app</span></div>
+    <h2>仓库助手 App（Flutter）</h2>
+    <p>同一个后端的移动端：扫码收货入库、逐件扫码拣货发货并生成运单号、库存查询，操作实时同步到 ERP。网页版直接试用，也可以下载 <span class="dl" role="link" tabindex="0" onclick="event.preventDefault();location.href=this.dataset.href" onkeydown="if(event.key==='Enter'){event.preventDefault();location.href=this.dataset.href}" data-href="https://github.com/xiaozhuangping-cpu/wavely-crossborder/releases/download/app-latest/wavely-warehouse.apk">安卓安装包</span></p>
   </a>
 
-  <h3>✦ AI 场景短片</h3>
-  <p class="sub">以商品白底图为素材，用 Google Flow（Veo 3.1）生成；独立站首页与商品页同步展示，ERP 里可上传替换。</p>
+  <h3>AI 场景短片</h3>
+  <p class="sub">以商品白底图为素材，用 Google Flow（Veo 3.1）生成；独立站首页与商品页同步展示，ERP 里可上传替换</p>
   <div class="films">
     <a href="shop/p/7/"><video src="shop/videos/WV-PET-001.mp4" poster="shop/videos/WV-PET-001.jpg" muted loop playsinline autoplay preload="metadata"></video><span>智能宠物饮水机</span></a>
     <a href="shop/p/4/"><video src="shop/videos/WV-OUT-001.mp4" poster="shop/videos/WV-OUT-001.jpg" muted loop playsinline autoplay preload="metadata"></video><span>超轻户外折叠椅</span></a>
@@ -104,7 +113,7 @@
   </ul>
   <section class="contact" aria-labelledby="contact-title">
     <div>
-      <p class="eyebrow">联系作者</p>
+      <p class="meta">联系作者</p>
       <h2 id="contact-title">加我微信</h2>
       <p>项目交流、反馈建议，欢迎扫码添加好友。</p>
       <p>微信昵称：xiaofeng</p>
