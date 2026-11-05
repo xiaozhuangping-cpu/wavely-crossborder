@@ -16,8 +16,16 @@ export async function exportXlsx(fileName, sheets) {
     ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: s.columns.length } };
   }
   const buf = await wb.xlsx.writeBuffer();
-  const url = URL.createObjectURL(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
-  const a = Object.assign(document.createElement('a'), { href: url, download: `${fileName}-${new Date().toISOString().slice(0, 10)}.xlsx` });
+  downloadBlob(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `${fileName}-${today()}.xlsx`);
+}
+
+const today = () => new Date().toISOString().slice(0, 10);
+
+export function downloadBlob(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement('a'), { href: url, download: name });
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+export const downloadCsv = (fileName, text) => downloadBlob(new Blob([text], { type: 'text/csv;charset=utf-8' }), `${fileName}-${today()}.csv`);

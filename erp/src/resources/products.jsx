@@ -11,6 +11,7 @@ import { fmtMoney, shopUrl } from '../constants';
 import { Thumb, SkuStatus, SKU_GRID_COLS } from './skus';
 import { AgList, col, render } from '../grid';
 import { ProductVideoTab } from './ProductVideoTab';
+import { ListingExportButton } from './ListingExport';
 
 const CATEGORIES = ['家居', '户外', '宠物', '美妆', '数码配件'].map((c) => ({ id: c, name: c }));
 const STATUS = [{ id: 'active', name: '在售' }, { id: 'draft', name: '草稿' }, { id: 'archived', name: '已下架' }];
@@ -86,7 +87,8 @@ export const ProductList = () => {
         <SimpleList leftAvatar={(r) => <Thumb src={r.image_url} size={40} />} primaryText={(r) => r.name?.zh}
           secondaryText={(r) => `${r.sku} · ${r.skus?.length ?? 0} 个 SKU`} tertiaryText={(r) => priceRange(r.skus)} linkType="edit" />
       ) : (
-        <AgList columnDefs={PRODUCT_COLS} rowClick={(id) => `/products/${id}`} actions={<><CreateButton label="新建商品" /><ExportButton /></>} />
+        <AgList columnDefs={PRODUCT_COLS} rowClick={(id) => `/products/${id}`} actions={<><CreateButton label="新建商品" /><ExportButton /><ListingExportButton /></>}
+          bulkActions={<ListingExportButton selected />} />
       )}
     </List>
   );
