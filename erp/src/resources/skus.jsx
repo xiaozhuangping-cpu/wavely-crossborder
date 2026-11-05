@@ -1,4 +1,5 @@
 // SKU 管理：列表（读视图 v_skus）、编辑/新建（写表 skus）、批量改价与上下架
+import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import { useState } from 'react';
 import {
   List, Datagrid, TextField, NumberField, FunctionField, SimpleList, SearchInput, SelectInput, BooleanInput,
@@ -31,7 +32,7 @@ export const Thumb = ({ src, size = 44 }) => {
     <Box sx={{ width: size, height: size, borderRadius: 1.5, bgcolor: '#fff', overflow: 'hidden', flexShrink: 0, display: 'grid', placeItems: 'center' }}>
       {src && !err
         ? <Box component="img" src={src} alt="" loading="lazy" onError={() => setErr(true)} sx={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-        : <Typography sx={{ fontSize: size * 0.4, opacity: 0.4 }}>📦</Typography>}
+        : <Inventory2OutlinedIcon sx={{ fontSize: size * 0.45, color: 'text.disabled' }} />}
     </Box>
   );
 };

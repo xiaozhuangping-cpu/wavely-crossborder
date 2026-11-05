@@ -160,7 +160,7 @@ const NavItem = ({ to, icon, label, count, active, collapsed, onClick, bold }) =
       })}>
       {icon}
       {!collapsed && <Box component="span" sx={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</Box>}
-      {!collapsed && count > 0 && <Box component="span" sx={{ fontSize: 12, fontWeight: 700 }}>{count.toLocaleString()}</Box>}
+      {!collapsed && count > 0 && <Box component="span" sx={{ fontSize: 12, fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>{count.toLocaleString()}</Box>}
     </Box>
   </Tooltip>
 );

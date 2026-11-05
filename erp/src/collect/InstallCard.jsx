@@ -12,7 +12,7 @@ import { useExtension, isOutdated, EXTENSION_LATEST, EXTENSION_ZIP, EXTENSIONS_P
 
 const Step = ({ n, title, children }) => (
   <Stack direction="row" spacing={1.5} sx={{ alignItems: 'flex-start', flex: 1, minWidth: 220 }}>
-    <Box sx={{ width: 26, height: 26, borderRadius: '50%', bgcolor: '#0e7490', color: '#fff', fontWeight: 700, fontSize: 13, display: 'grid', placeItems: 'center', flexShrink: 0 }}>{n}</Box>
+    <Box sx={{ width: 26, height: 26, borderRadius: '50%', bgcolor: 'action.hover', color: 'text.primary', fontWeight: 500, fontSize: 13, display: 'grid', placeItems: 'center', flexShrink: 0 }}>{n}</Box>
     <Box sx={{ minWidth: 0 }}>
       <Typography sx={{ fontWeight: 600, fontSize: 14 }}>{title}</Typography>
       <Box sx={{ fontSize: 13, color: 'text.secondary', mt: 0.25, lineHeight: 1.6 }}>{children}</Box>

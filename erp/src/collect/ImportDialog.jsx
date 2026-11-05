@@ -1,4 +1,5 @@
 // 采集箱 → 草稿商品：选类目、填名称、勾选要保留的规格、按目标毛利批量定价
+import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import { useMemo, useState } from 'react';
 import { useNotify, useRefresh, useGetList } from 'react-admin';
 import { useNavigate } from 'react-router-dom';
@@ -23,7 +24,7 @@ const marginOf = (price, costCny, g, cny) => (price ? (price * (1 - FEE) - costC
 
 export const Img = ({ src, size = 40 }) => (
   <Box sx={{ width: size, height: size, borderRadius: 1, overflow: 'hidden', bgcolor: '#fff', flexShrink: 0, display: 'grid', placeItems: 'center' }}>
-    {src ? <Box component="img" src={src} alt="" loading="lazy" referrerPolicy="no-referrer" sx={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ opacity: 0.4 }}>📦</span>}
+    {src ? <Box component="img" src={src} alt="" loading="lazy" referrerPolicy="no-referrer" sx={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Inventory2OutlinedIcon sx={{ fontSize: size * 0.45, color: 'text.disabled' }} />}
   </Box>
 );
 
@@ -150,7 +151,7 @@ export function ImportDialog({ draft, onClose }) {
           </Stack>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
             <TextField label="English name（可选）" value={f.en} onChange={(e) => set({ en: e.target.value })} size="small" fullWidth
-              helperText={f.ai ? '留空则由 AI 生成；填写后以你的为准' : '也可以导入后让 ✦ AI 运营助手写多语言 Listing'} />
+              helperText={f.ai ? '留空则由 AI 生成；填写后以你的为准' : '也可以导入后让 AI 运营助手写多语言 Listing'} />
             <TextField label="规格名" value={f.optionName} onChange={(e) => set({ optionName: e.target.value })} size="small" sx={{ minWidth: 180 }} />
             <TextField select label="导入后" value={f.status} onChange={(e) => set({ status: e.target.value })} size="small" sx={{ minWidth: 210 }}>
               {STATUS_OPTIONS.map((o) => <MenuItem key={o.id} value={o.id}>{o.label}</MenuItem>)}

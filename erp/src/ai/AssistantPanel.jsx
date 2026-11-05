@@ -51,12 +51,7 @@ const waiting = (s) => {
 const AssistantMessage = () => (
   <MessagePrimitive.Root>
     <Box sx={{ display: 'flex', gap: 1.25, my: 1.5 }}>
-      <AuiIf condition={(s) => s.message.status?.type === 'running'}>
-        <Box sx={{ pt: 0.5, flexShrink: 0, display: 'flex', '@keyframes spin': { to: { transform: 'rotate(360deg)' } }, animation: 'spin 1.6s linear infinite', height: 'fit-content' }}><Sparkle /></Box>
-      </AuiIf>
-      <AuiIf condition={(s) => s.message.status?.type !== 'running'}>
-        <Box sx={{ pt: 0.5, flexShrink: 0 }}><Sparkle /></Box>
-      </AuiIf>
+      <Box sx={{ pt: 0.5, flexShrink: 0 }}><Sparkle /></Box>
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <MessagePrimitive.Parts components={{ Text: MarkdownText, tools: { by_name: TOOL_UIS, Fallback: ToolFallback } }} />
         <AuiIf condition={waiting}>
@@ -70,10 +65,7 @@ const AssistantMessage = () => (
 const Welcome = () => (
   <AuiIf condition={(s) => s.thread.isEmpty}>
     <Box sx={{ pt: 3 }}>
-      <Typography sx={(t) => ({ fontSize: 26, fontWeight: 500, lineHeight: 1.3,
-        background: 'linear-gradient(90deg, #4f8cf7, #9b72cb 50%, #d96570)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' })}>
-        你好，我是运营助手
-      </Typography>
+      <Typography sx={{ fontSize: 22, fontWeight: 500, lineHeight: 1.3 }}>运营助手</Typography>
       <Typography sx={{ fontSize: 14, color: 'text.secondary', mt: 1, mb: 2.5 }}>
         可以帮你查销售数据、找补货商品、写多语言 Listing、批量发货。写操作都会先让你确认。
       </Typography>

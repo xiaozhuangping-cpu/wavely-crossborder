@@ -75,14 +75,14 @@ export const deepseekAdapter = {
       });
     } catch (e) {
       if (e.name === 'AbortError') throw e;
-      yield { content: [{ type: 'text', text: '⚠️ 网络异常，请稍后再试' }] };
+      yield { content: [{ type: 'text', text: '网络异常，请稍后再试' }] };
       return;
     }
 
     // 鉴权/配额等错误在开始流式之前以 JSON 返回
     if (!res.ok || !res.headers.get('content-type')?.includes('text/event-stream')) {
       const d = await res.json().catch(() => ({}));
-      yield { content: [{ type: 'text', text: `⚠️ ${d.error ?? `服务返回异常（HTTP ${res.status}）`}` }] };
+      yield { content: [{ type: 'text', text: `${d.error ?? `服务返回异常（HTTP ${res.status}）`}` }] };
       return;
     }
 
@@ -104,7 +104,7 @@ export const deepseekAdapter = {
         } else if (ev.type === 'tool') {
           content.push(toolPart(ev.part));
         } else if (ev.type === 'error') {
-          content.push({ type: 'text', text: `\n\n⚠️ ${ev.message}` });
+          content.push({ type: 'text', text: `\n\n${ev.message}` });
         }
         changed = true;
       }

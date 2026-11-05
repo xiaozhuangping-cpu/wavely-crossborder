@@ -111,7 +111,7 @@ const LOCALES = { en: 'English', de: 'Deutsch', ja: '日本語', es: 'Español',
 const SavedListings = () => {
   const p = useRecordContext();
   const entries = Object.entries(p?.listing ?? {});
-  if (!entries.length) return <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>还没有保存的 Listing。打开右上角 ✦ AI 运营助手，让它帮你写一条吧。</Typography>;
+  if (!entries.length) return <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>还没有保存的 Listing。打开右上角的 AI 运营助手，让它写一条。</Typography>;
   return (
     <Box sx={{ display: 'grid', gap: 2, width: '100%' }}>
       {entries.map(([loc, l]) => (

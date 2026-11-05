@@ -50,7 +50,7 @@ export const ProfitCalculator = () => {
   return (
     <Box sx={{ py: 2 }}>
       <Title title="利润计算器" />
-      <Typography variant="h5" sx={{ fontWeight: 800, mb: 2 }}>跨境利润计算器</Typography>
+      <Typography sx={{ fontSize: 24, fontWeight: 500, mb: 2 }}>跨境利润计算器</Typography>
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, md: 6 }}>
           <Card><CardContent>
@@ -85,7 +85,7 @@ export const ProfitCalculator = () => {
             {!r ? <Typography sx={{ color: 'text.secondary' }}>加载汇率中…</Typography> : (
               <>
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>单件净利润</Typography>
-                <Typography variant="h3" sx={{ fontWeight: 800, color: r.profit >= 0 ? 'success.main' : 'error.main' }}>{fmtMoney(r.profit)}</Typography>
+                <Typography variant="h3" sx={{ fontWeight: 500, fontVariantNumeric: 'tabular-nums', color: r.profit >= 0 ? 'success.main' : 'error.main' }}>{fmtMoney(r.profit)}</Typography>
                 <Stack direction="row" sx={{ gap: 1, my: 1.5, flexWrap: 'wrap' }}>
                   <Chip label={`毛利率 ${pct}%`} color={pct >= 25 ? 'success' : pct >= 10 ? 'warning' : 'error'} />
                   <Chip variant="outlined" label={`投入回报 ${Math.round(r.roi * 100)}%`} />

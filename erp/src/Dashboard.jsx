@@ -1,33 +1,64 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Title, Link } from 'react-admin';
-import { Box, Card, CardContent, Typography, Grid, ToggleButton, ToggleButtonGroup, Skeleton, Chip, Stack, List, ListItem, ListItemText, Alert } from '@mui/material';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
+import { Box, Card, CardContent, Typography, Grid, ToggleButton, ToggleButtonGroup, Skeleton, Chip, Stack, List, ListItem, ListItemText, Alert, useTheme } from '@mui/material';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { supabase } from './supabase';
 import { PLATFORMS, COUNTRIES, ORDER_STATUS, fmtMoney } from './constants';
 
-const Kpi = ({ label, value, hint, color = 'primary.main' }) => (
+const MONO = 'ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace';
+const num = { fontVariantNumeric: 'tabular-nums' };
+
+// 统计卡：标签 + 数字 + 说明，不加颜色和装饰
+const Kpi = ({ label, value, hint }) => (
   <Card sx={{ height: '100%', containerType: 'inline-size' }}>
-    <CardContent>
-      <Typography variant="body2" sx={{ color: 'text.secondary' }}>{label}</Typography>
-      <Typography variant="h4" sx={{ fontWeight: 800, color: color, my: 0.5, fontSize: 'clamp(1.05rem, 11cqi, 2rem)', whiteSpace: 'nowrap' }}>{value}</Typography>
-      {hint && <Typography variant="caption" sx={{ color: 'text.secondary' }}>{hint}</Typography>}
+    <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
+      <Typography sx={{ fontSize: 13, color: 'text.secondary' }}>{label}</Typography>
+      <Typography sx={{ ...num, fontWeight: 500, my: 1, fontSize: 'clamp(1.05rem, 11cqi, 1.75rem)', lineHeight: 1.1, whiteSpace: 'nowrap' }}>{value}</Typography>
+      {hint && <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>{hint}</Typography>}
     </CardContent>
   </Card>
 );
 
 const Panel = ({ title, children, action }) => (
   <Card sx={{ height: '100%' }}>
-    <CardContent>
-      <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2, gap: 1, flexWrap: 'wrap' }}>
-        <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>{title}</Typography>
-        {action}
+    <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
+      <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2, gap: 1, flexWrap: 'wrap', minHeight: 24 }}>
+        <Typography sx={{ fontSize: 15, fontWeight: 500 }}>{title}</Typography>
+        {action && <Box sx={{ fontSize: 13 }}>{action}</Box>}
       </Stack>
       {children}
     </CardContent>
   </Card>
 );
 
+// 排行列表：名称、数值、细条。color 不传时只有第一名用强调色，其余为中性灰
+const RankList = ({ rows, total, color }) => (
+  <Stack spacing={1.75}>
+    {rows.map((r, i) => {
+      const pct = total ? (r.value / total) * 100 : 0;
+      return (
+        <Box key={r.key}>
+          <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'baseline', gap: 1, mb: 0.75 }}>
+            <Stack direction="row" sx={{ alignItems: 'center', gap: 1, minWidth: 0 }}>
+              {color && <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: color(r), flexShrink: 0 }} />}
+              <Typography noWrap sx={{ fontSize: 14 }}>{r.name}</Typography>
+            </Stack>
+            <Typography sx={{ ...num, fontSize: 13, color: 'text.secondary', whiteSpace: 'nowrap' }}>
+              {fmtMoney(r.value)}<Box component="span" sx={{ display: 'inline-block', minWidth: 40, textAlign: 'right' }}>{Math.round(pct)}%</Box>
+            </Typography>
+          </Stack>
+          <Box sx={{ height: 4, borderRadius: 2, bgcolor: 'action.hover', overflow: 'hidden' }}>
+            <Box sx={{ height: '100%', width: `${pct}%`, borderRadius: 2, bgcolor: color ? color(r) : i === 0 ? 'primary.main' : 'text.disabled' }} />
+          </Box>
+        </Box>
+      );
+    })}
+  </Stack>
+);
+
 export const Dashboard = () => {
+  const theme = useTheme();
+  const tick = { fontSize: 11, fill: theme.palette.text.secondary, fontFamily: MONO };
   const [range, setRange] = useState(30);
   const [daily, setDaily] = useState(null);
   const [countries, setCountries] = useState([]);
@@ -85,7 +116,7 @@ export const Dashboard = () => {
     <Box sx={{ py: 2 }}>
       <Title title="经营看板" />
       <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1 }}>
-        <Typography variant="h5" sx={{ fontWeight: 800 }}>经营看板</Typography>
+        <Typography sx={{ fontSize: 24, fontWeight: 500 }}>经营看板</Typography>
         <ToggleButtonGroup size="small" exclusive value={range} onChange={(_, v) => v && setRange(v)}>
           <ToggleButton value={7}>近 7 天</ToggleButton>
           <ToggleButton value={30}>近 30 天</ToggleButton>
@@ -98,10 +129,10 @@ export const Dashboard = () => {
           ['销售额 GMV', stats && fmtMoney(stats.gmv), '已折算美元，不含退款/取消'],
           ['订单数', stats?.orders.toLocaleString(), `近 ${range} 天`],
           ['客单价', stats && fmtMoney(stats.aov), '平均每单'],
-          ['待发货', todo.paid, `运输中 ${todo.in_transit} 单`, 'warning.main'],
-        ].map(([l, v, h, c]) => (
+          ['待发货', todo.paid, `运输中 ${todo.in_transit} 单`],
+        ].map(([l, v, h]) => (
           <Grid size={{ xs: 6, md: 3 }} key={l}>
-            {v == null ? <Skeleton variant="rounded" height={118} /> : <Kpi label={l} value={v} hint={h} color={c} />}
+            {v == null ? <Skeleton variant="rounded" height={112} /> : <Kpi label={l} value={v} hint={h} />}
           </Grid>
         ))}
 
@@ -109,14 +140,14 @@ export const Dashboard = () => {
           <Panel title="每日销售额（按平台，USD）">
             {!stats ? <Skeleton variant="rounded" height={280} /> : (
               <ResponsiveContainer width="100%" height={280}>
-                <AreaChart data={stats.series} margin={{ left: -10, right: 8 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                  <XAxis dataKey="day" tick={{ fontSize: 12 }} minTickGap={16} />
-                  <YAxis tick={{ fontSize: 12 }} />
+                <AreaChart data={stats.series} margin={{ left: -8, right: 8, top: 4 }}>
+                  <CartesianGrid vertical={false} stroke={theme.palette.divider} />
+                  <XAxis dataKey="day" tick={tick} tickLine={false} axisLine={false} minTickGap={24} />
+                  <YAxis tick={tick} tickLine={false} axisLine={false} width={48} />
                   <Tooltip formatter={(v) => fmtMoney(v)} />
                   {usedPlatforms.map((k) => (
                     <Area key={k} type="monotone" dataKey={k} name={PLATFORMS[k].label} stackId="1"
-                          stroke={PLATFORMS[k].color} fill={PLATFORMS[k].color} fillOpacity={0.55} />
+                          stroke={PLATFORMS[k].color} strokeWidth={1.5} fill={PLATFORMS[k].color} fillOpacity={0.18} />
                   ))}
                 </AreaChart>
               </ResponsiveContainer>
@@ -127,47 +158,26 @@ export const Dashboard = () => {
         <Grid size={{ xs: 12, sm: 6, lg: 4 }} >
           <Panel title="平台占比">
             {!stats ? <Skeleton variant="rounded" height={280} /> : (
-              <>
-                <ResponsiveContainer width="100%" height={200}>
-                  <PieChart>
-                    <Pie data={stats.platforms} dataKey="value" nameKey="name" innerRadius={55} outerRadius={85} paddingAngle={2}>
-                      {stats.platforms.map((p) => <Cell key={p.key} fill={PLATFORMS[p.key]?.color} />)}
-                    </Pie>
-                    <Tooltip formatter={(v) => fmtMoney(v)} />
-                  </PieChart>
-                </ResponsiveContainer>
-                <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1, justifyContent: 'center' }}>
-                  {stats.platforms.map((p) => (
-                    <Chip key={p.key} size="small" label={`${p.name} ${Math.round((p.value / stats.gmv) * 100)}%`}
-                          sx={{ bgcolor: PLATFORMS[p.key]?.color, color: '#fff' }} />
-                  ))}
-                </Stack>
-              </>
+              <RankList rows={stats.platforms} total={stats.gmv} color={(r) => PLATFORMS[r.key]?.color} />
             )}
           </Panel>
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, lg: 4 }} >
           <Panel title="国家/地区销售额（累计）">
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={countries.map((c) => ({ ...c, label: COUNTRIES[c.country] ?? c.country, gmv: Math.round(c.gmv_usd) }))} layout="vertical" margin={{ left: 10 }}>
-                <XAxis type="number" hide />
-                <YAxis type="category" dataKey="label" width={90} tick={{ fontSize: 12 }} />
-                <Tooltip formatter={(v) => fmtMoney(v)} />
-                <Bar dataKey="gmv" name="GMV" fill="#0e7490" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <RankList rows={countries.slice(0, 6).map((c) => ({ key: c.country, name: COUNTRIES[c.country] ?? c.country, value: Number(c.gmv_usd) }))}
+              total={countries.reduce((a, c) => a + Number(c.gmv_usd), 0)} />
           </Panel>
         </Grid>
 
         <Grid size={{ xs: 12, md: 6, lg: 4 }} >
-          <Panel title="⚠️ 低库存预警" action={<Link to="/v_inventory?filter=%7B%22low_stock%22%3Atrue%7D">查看全部</Link>}>
+          <Panel title="低库存预警" action={<Link to="/v_inventory?filter=%7B%22low_stock%22%3Atrue%7D">查看全部</Link>}>
             <List dense disablePadding>
               {low.length === 0 && <Typography sx={{ color: 'text.secondary' }}>暂无低库存商品</Typography>}
               {low.map((r) => (
                 <ListItem key={r.id} disableGutters divider>
-                  <ListItemText primary={r.product_name} secondary={`${r.sku} · ${r.warehouse_name}`} />
-                  <Chip size="small" color={r.qty === 0 ? 'error' : 'warning'} label={`${r.qty} / ${r.safety_qty}`} />
+                  <ListItemText primary={r.product_name} secondary={<><Box component="span" sx={{ fontFamily: MONO, fontSize: 12 }}>{r.sku}</Box> · {r.warehouse_name}</>} />
+                  <Typography sx={{ ...num, fontFamily: MONO, fontSize: 13, color: r.qty === 0 ? 'error.main' : 'warning.main', whiteSpace: 'nowrap' }}>{r.qty} / {r.safety_qty}</Typography>
                 </ListItem>
               ))}
             </List>
@@ -179,10 +189,10 @@ export const Dashboard = () => {
             <List dense disablePadding>
               {recent.map((o) => (
                 <ListItem key={o.id} disableGutters divider component={Link} to={`/orders/${o.id}/show`} sx={{ color: 'inherit' }}>
-                  <ListItemText primary={o.order_no} secondary={o.shops?.name} />
+                  <ListItemText primary={o.order_no} secondary={o.shops?.name} slotProps={{ primary: { sx: { fontFamily: MONO, fontSize: 13 } } }} />
                   <Stack spacing={0.5} sx={{ alignItems: 'flex-end' }}>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{fmtMoney(o.total_amount, o.currency)}</Typography>
-                    <Chip size="small" label={ORDER_STATUS[o.status]?.label} color={ORDER_STATUS[o.status]?.color} />
+                    <Typography variant="body2" sx={{ ...num, fontWeight: 500 }}>{fmtMoney(o.total_amount, o.currency)}</Typography>
+                    <Chip size="small" variant="outlined" label={ORDER_STATUS[o.status]?.label} color={ORDER_STATUS[o.status]?.color} />
                   </Stack>
                 </ListItem>
               ))}

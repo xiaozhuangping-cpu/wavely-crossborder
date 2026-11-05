@@ -22,7 +22,7 @@ const tokens = {
   },
 };
 
-const fontFamily = '"Google Sans", Roboto, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif';
+const fontFamily = '"Google Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif';
 
 const build = (base, mode) => {
   const gm = tokens[mode];
@@ -43,11 +43,11 @@ const build = (base, mode) => {
     sidebar: { width: 256, closedWidth: 72 },
     components: {
       ...base.components,
-      MuiButton: { defaultProps: { disableElevation: true }, styleOverrides: { root: { borderRadius: 20, paddingInline: 16 } } },
+      MuiButton: { defaultProps: { disableElevation: true }, styleOverrides: { root: { borderRadius: 10, paddingInline: 16 } } },
       MuiCard: { styleOverrides: { root: { boxShadow: 'none', border: `1px solid ${gm.border}`, borderRadius: 12, backgroundImage: 'none' } } },
       MuiPaper: { styleOverrides: { root: { backgroundImage: 'none' } } },
       MuiChip: { styleOverrides: { root: { borderRadius: 8, fontWeight: 500 } } },
-      MuiTableCell: { styleOverrides: { root: { borderColor: gm.border }, head: { fontWeight: 600, color: gm.textSub, background: 'transparent' } } },
+      MuiTableCell: { styleOverrides: { root: { borderColor: gm.border }, head: { fontWeight: 500, color: gm.textSub, background: 'transparent' } } },
       MuiTableRow: { styleOverrides: { root: { '&.MuiTableRow-hover:hover': { backgroundColor: gm.unreadRow, boxShadow: gm.rowShadow, position: 'relative', zIndex: 1 } } } },
       MuiFilledInput: { styleOverrides: { root: { borderRadius: 8, '&::before, &::after': { display: 'none' } } } },
       // react-admin 为没有提示文字的输入框也预留一行占位（只含零宽空格），隐藏掉以收紧表单间距；校验报错时仍然显示

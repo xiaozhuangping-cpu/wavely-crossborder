@@ -28,8 +28,8 @@ export const SHIP_STATUS = {
 export const WAREHOUSE_KIND = { domestic: '国内仓', overseas: '海外仓', fba: 'FBA 仓' };
 
 export const COUNTRIES = {
-  US: '🇺🇸 美国', DE: '🇩🇪 德国', JP: '🇯🇵 日本', SG: '🇸🇬 新加坡', MY: '🇲🇾 马来西亚',
-  GB: '🇬🇧 英国', CA: '🇨🇦 加拿大', AU: '🇦🇺 澳大利亚', CN: '🇨🇳 中国', FR: '🇫🇷 法国',
+  US: '美国', DE: '德国', JP: '日本', SG: '新加坡', MY: '马来西亚',
+  GB: '英国', CA: '加拿大', AU: '澳大利亚', CN: '中国', FR: '法国',
 };
 
 export const toChoices = (obj) =>
