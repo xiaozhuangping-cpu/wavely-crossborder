@@ -34,6 +34,7 @@ import ExtensionOutlinedIcon from '@mui/icons-material/ExtensionOutlined';
 import { useExtension } from './collect/extension';
 import { RoleSwitcher, useRole } from './auth/role';
 import HistoryIcon from '@mui/icons-material/History';
+import PhotoLibraryOutlinedIcon from '@mui/icons-material/PhotoLibraryOutlined';
 import GavelOutlinedIcon from '@mui/icons-material/GavelOutlined';
 
 // AI 面板（assistant-ui、Markdown、图表）首次打开时才加载
@@ -197,6 +198,7 @@ const Sidebar = ({ collapsed, onNavigate }) => {
       active: isOrders((x) => x['status@in'] === '(refunded,cancelled)') },
   ];
   const manage = [
+    { to: '/image-workbench', icon: <PhotoLibraryOutlinedIcon />, label: '商品图片工作台' },
     { to: '/products', icon: <Inventory2OutlinedIcon />, label: '商品 (SPU)' },
     { to: '/v_skus', icon: <QrCode2Icon />, label: 'SKU 管理' },
     { to: '/import_drafts', icon: <AddShoppingCartIcon />, label: '1688 采集', count: collected },

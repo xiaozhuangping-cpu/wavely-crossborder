@@ -20,6 +20,7 @@ import { LinearProgress } from '@mui/material';
 const DashboardImpl = lazy(() => import('./Dashboard').then((m) => ({ default: m.Dashboard })));
 const Dashboard = () => <Suspense fallback={<LinearProgress sx={{ m: 2 }} />}><DashboardImpl /></Suspense>;
 import { ProfitCalculator } from './ProfitCalculator';
+import { ImageWorkbench } from './resources/ImageWorkbench';
 import { OrderList, OrderShow, OrderEdit } from './resources/orders';
 import { ProductList, ProductEdit, ProductCreate } from './resources/products';
 import { SkuList, SkuEdit, SkuCreate } from './resources/skus';
@@ -64,6 +65,7 @@ export const App = () => (
     <Resource name="tracking_events" />
     <Resource name="warehouses" />
     <CustomRoutes>
+      <Route path="/image-workbench" element={<ImageWorkbench />} />
       <Route path="/profit" element={<ProfitCalculator />} />
     </CustomRoutes>
   </Admin>

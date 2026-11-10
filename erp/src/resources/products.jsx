@@ -11,6 +11,7 @@ import { fmtMoney, shopUrl } from '../constants';
 import { Thumb, SkuStatus, SKU_GRID_COLS } from './skus';
 import { AgList, col, render } from '../grid';
 import { ProductVideoTab } from './ProductVideoTab';
+import { ProductImageTab } from './ProductImageTab';
 import { ListingExportButton } from './ListingExport';
 
 const CATEGORIES = ['家居', '户外', '宠物', '美妆', '数码配件'].map((c) => ({ id: c, name: c }));
@@ -183,6 +184,7 @@ const ProductForm = ({ create }) => (
       <TextInput source="description.zh" label="中文描述" multiline fullWidth />
       <TextInput source="description.en" label="English description" multiline fullWidth />
     </TabbedForm.Tab>
+    {!create && <TabbedForm.Tab label="商品图片"><ProductImageTab /></TabbedForm.Tab>}
     {!create && <TabbedForm.Tab label="视频"><ProductVideoTab /></TabbedForm.Tab>}
     {!create && <TabbedForm.Tab label="AI Listing"><SavedListings /></TabbedForm.Tab>}
     <TabbedForm.Tab label="价格与利润"><PriceTab create={create} /></TabbedForm.Tab>
